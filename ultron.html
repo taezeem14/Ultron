@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ULTRON — Tactical Control Console</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  
+  <!-- KaTeX CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Hide scrollbars but allow scrolling */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #dc2626;
+    }
+    /* HUD Corner bracket decoration */
+    .hud-brackets::before, .hud-brackets::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-color: #dc2626;
+      border-style: solid;
+      pointer-events: none;
+    }
+    .hud-brackets::before {
+      top: -1px;
+      left: -1px;
+      border-width: 1px 0 0 1px;
+    }
+    .hud-brackets::after {
+      top: -1px;
+      right: -1px;
+      border-width: 1px 1px 0 0;
+    }
+    .hud-brackets-bottom::before, .hud-brackets-bottom::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-color: #dc2626;
+      border-style: solid;
+      pointer-events: none;
+    }
+    .hud-brackets-bottom::before {
+      bottom: -1px;
+      left: -1px;
+      border-width: 0 0 1px 1px;
+    }
+    .hud-brackets-bottom::after {
+      bottom: -1px;
+      right: -1px;
+      border-width: 0 1px 1px 0;
+    }
+  </style>
+</head>
+<body class="bg-black text-red-400 h-screen w-screen overflow-hidden flex flex-col select-none">
+
+  <!-- ========== HEADER ========== -->
+  <header class="flex items-center justify-between px-6 py-4 border-b border-red-950 bg-zinc-950 shrink-0 relative">
+    <div class="flex items-center gap-4">
+      <!-- Jarvis/Stark style dynamic logo -->
+      <div class="relative w-10 h-10 border border-red-800 flex items-center justify-center bg-zinc-900 shrink-0">
+        <div class="absolute inset-0.5 border border-red-900/50"></div>
+        <span class="font-mono text-sm font-bold text-red-400">UL</span>
+        <div class="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 border-t border-l border-red-500"></div>
+        <div class="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 border-b border-r border-red-500"></div>
+      </div>
+      <div>
+        <h1 class="font-mono text-sm font-bold tracking-widest text-white flex items-center gap-2">
+          ULTRON <span class="text-[9px] px-1 py-0.2 bg-red-950 border border-red-800 text-red-300 font-normal rounded">v2.1</span>
+        </h1>
+        <p class="text-[9px] text-red-700 tracking-widest uppercase font-mono">Tactical Systems Control & Diagnostics</p>
+      </div>
+    </div>
+    
+    <!-- Top-right Info Telemetry -->
+    <div class="flex items-center gap-4 font-mono text-[10px]">
+      <div class="hidden sm:flex flex-col items-end text-zinc-500 leading-tight">
+        <span>LOC: 0x7FFF00F2</span>
+        <span>SYS: ONLINE_CORE</span>
+      </div>
+      
+      <!-- ABORT BUTTON -->
+      <button id="abortBtn" class="hidden flex items-center gap-1.5 px-3 py-1 bg-red-950 hover:bg-red-900 border border-red-500 rounded text-red-400 hover:text-white font-bold cursor-pointer transition-colors" title="Abort Active Protocol">
+        <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
+        ABORT
+      </button>
+
+      <div class="flex items-center gap-2 px-3 py-1.5 bg-zinc-950 border border-red-900 rounded relative">
+        <div id="statusDot" class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+        <span id="statusText" class="text-red-300 font-semibold tracking-wider">ACTIVE</span>
+        <div class="absolute top-0 left-0 w-1 h-1 border-t border-l border-red-500"></div>
+        <div class="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-red-500"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== MAIN CONSOLE LAYOUT ========== -->
+  <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+    
+    <!-- CHAT COLUMN -->
+    <section class="flex-1 flex flex-col min-w-0 border-r border-red-950 bg-black relative">
+      
+      <!-- Subtle tactical background grids -->
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,#08334407_1px,transparent_1px),linear-gradient(to_bottom,#08334407_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+
+      <!-- MESSAGES VIEW -->
+      <div id="messages" class="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6 relative z-1">
+        <!-- Messages populate dynamically -->
+      </div>
+      
+      <!-- TYPING INDICATOR -->
+      <div id="typingIndicator" class="hidden px-6 py-3 shrink-0 relative z-1">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-red-900 rounded font-mono text-xs">
+          <span class="text-red-500 animate-pulse">COMPUTING RESPONSE</span>
+          <span class="w-1 h-3 bg-red-500 animate-bounce" style="animation-delay: 0.1s"></span>
+          <span class="w-1 h-3 bg-red-500 animate-bounce" style="animation-delay: 0.2s"></span>
+        </div>
+      </div>
+      
+      <!-- INPUT BAR -->
+      <div class="p-6 border-t border-red-950 bg-zinc-950 shrink-0 relative z-1">
+        
+        <!-- ATTACHMENT PREVIEW PANEL -->
+        <div id="attachmentPreview" class="hidden flex items-center gap-3 p-2 mb-2 bg-black border border-red-950 rounded relative font-mono text-[10px]">
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <!-- Thumbnail or icon placeholder -->
+            <div id="previewThumbnail" class="w-8 h-8 rounded border border-red-900 bg-zinc-950 overflow-hidden flex items-center justify-center shrink-0"></div>
+            <div class="flex flex-col min-w-0">
+              <span id="previewName" class="text-white font-bold truncate">filename.txt</span>
+              <span id="previewSize" class="text-red-700">25.4 KB</span>
+            </div>
+          </div>
+          <button id="previewRemove" class="w-6 h-6 rounded border border-red-900 flex items-center justify-center hover:bg-red-950/45 text-red-400 hover:text-white cursor-pointer" title="Remove attachment">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="relative flex items-center gap-2 p-2 bg-black border border-red-900/60 rounded focus-within:border-red-500 transition-colors">
+          <!-- Corners decoration -->
+          <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-red-600"></div>
+          <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-red-600"></div>
+
+          <!-- Hidden File Input -->
+          <input type="file" id="fileInput" class="hidden">
+
+          <!-- Attachment Button -->
+          <button id="attachBtn" class="w-10 h-10 rounded border border-red-900 flex items-center justify-center cursor-pointer text-red-400 hover:text-white hover:bg-red-950/40 transition-colors" title="Attach File/Image">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path>
+            </svg>
+          </button>
+
+          <input id="userInput" type="text" placeholder="ENTER INSTRUCTION PROTOCOL..." autocomplete="off" spellcheck="false" 
+            class="flex-1 bg-transparent border-none outline-none text-white text-sm py-2 px-3 placeholder-red-900 font-mono tracking-wider">
+          
+          <button id="micBtn" class="w-10 h-10 rounded border border-red-900 flex items-center justify-center cursor-pointer text-red-400 hover:text-white hover:bg-red-950/40 transition-colors" title="Voice Input">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="1" width="6" height="13" rx="3"/>
+              <path d="M19 10v1a7 7 0 01-14 0v-1"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
+          
+          <button id="sendBtn" class="w-10 h-10 rounded bg-red-600 hover:bg-red-500 text-white flex items-center justify-center cursor-pointer font-bold transition-transform active:scale-95" title="Send Message">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div id="voiceHint" class="text-center mt-2 text-[9px] text-red-800 tracking-widest font-mono h-4 uppercase"></div>
+      </div>
+    </section>
+
+    <!-- SIDEBAR / HUD PANELS -->
+    <aside class="w-full md:w-80 flex flex-col bg-zinc-950 shrink-0 font-mono select-none relative">
+      
+      <!-- Outer grid layer -->
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,#08334404_1px,transparent_1px),linear-gradient(to_bottom,#08334404_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
+
+      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 relative z-1">
+        
+        <!-- SYSTEM VITALS -->
+        <div id="vitalsContainer" class="border border-red-950 rounded bg-black p-4 relative hud-brackets hud-brackets-bottom">
+          <div class="flex items-center justify-between text-xs font-bold tracking-widest text-red-400 uppercase mb-4 border-b border-red-950 pb-2">
+            <span>[ SYSTEM TELEMETRY ]</span>
+            <span class="text-[9px] text-red-700">RT-09</span>
+          </div>
+          
+          <div class="flex flex-col gap-4">
+            <!-- CPU -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-2xs">
+                <span class="text-red-700">CPU.CORE.PROCESS</span>
+                <span id="cpuVal" class="text-white font-bold">—</span>
+              </div>
+              <div class="h-2 bg-zinc-900 border border-red-950 p-[1px] flex gap-[2px]">
+                <div id="cpuBar" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+            
+            <!-- RAM -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-2xs">
+                <span class="text-red-700">MEM.USAGE.ALLOC</span>
+                <span id="ramVal" class="text-white font-bold">—</span>
+              </div>
+              <div class="h-2 bg-zinc-900 border border-red-950 p-[1px] flex gap-[2px]">
+                <div id="ramBar" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+            
+            <!-- Disk -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between text-2xs">
+                <span class="text-red-700">STRG.SECT.INDEX</span>
+                <span id="diskVal" class="text-white font-bold">—</span>
+              </div>
+              <div class="h-2 bg-zinc-900 border border-red-950 p-[1px] flex gap-[2px]">
+                <div id="diskBar" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+            
+            <!-- Battery -->
+            <div id="battRow" class="hidden border-t border-red-950 pt-3">
+              <div class="flex items-center justify-between">
+                <span class="text-red-700 text-[10px] font-mono">BATTERY.CAP</span>
+                <div class="flex items-center gap-2">
+                  <span id="battVal" class="text-white font-bold text-[11px] font-mono">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVITY LOG -->
+        <div class="flex-1 flex flex-col border border-red-950 rounded bg-black p-4 min-h-[250px] relative hud-brackets hud-brackets-bottom">
+          <div class="flex items-center justify-between text-xs font-bold tracking-widest text-red-400 uppercase mb-3 border-b border-red-950 pb-2 shrink-0">
+            <span>[ EVENT_STREAM ]</span>
+            <span class="text-[9px] text-red-700">STDOUT</span>
+          </div>
+          <div class="flex-1 overflow-y-auto pr-1">
+            <div id="activityFeed" class="flex flex-col gap-2">
+              <!-- Activities list dynamic -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // ---- DOM binds ----
+      const DOM = {
+        statusDot:       document.getElementById('statusDot'),
+        statusText:      document.getElementById('statusText'),
+        messages:        document.getElementById('messages'),
+        userInput:       document.getElementById('userInput'),
+        sendBtn:         document.getElementById('sendBtn'),
+        micBtn:          document.getElementById('micBtn'),
+        voiceHint:       document.getElementById('voiceHint'),
+        activityFeed:    document.getElementById('activityFeed'),
+        cpuVal:          document.getElementById('cpuVal'),
+        cpuBar:          document.getElementById('cpuBar'),
+        ramVal:          document.getElementById('ramVal'),
+        ramBar:          document.getElementById('ramBar'),
+        diskVal:         document.getElementById('diskVal'),
+        diskBar:         document.getElementById('diskBar'),
+        battRow:         document.getElementById('battRow'),
+        battVal:         document.getElementById('battVal'),
+        vitalsContainer: document.getElementById('vitalsContainer'),
+        typing:          document.getElementById('typingIndicator'),
+        fileInput:       document.getElementById('fileInput'),
+        attachBtn:       document.getElementById('attachBtn'),
+        attachPreview:   document.getElementById('attachmentPreview'),
+        previewThumb:    document.getElementById('previewThumbnail'),
+        previewName:     document.getElementById('previewName'),
+        previewSize:     document.getElementById('previewSize'),
+        previewRemove:   document.getElementById('previewRemove'),
+        abortBtn:        document.getElementById('abortBtn'),
+      };
+
+      const API_BASE  = 'http://127.0.0.1:8765';
+      const WS_URL    = 'ws://127.0.0.1:8765/ws/chat';
+      const ACTIVITY_MAX = 40;
+
+      let ws = null;
+      let reconnectTimer = null;
+      let statsTimer = null;
+
+      // ---- Basic Helpers ----
+      function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+      }
+
+      // ---- Markdown & KaTeX Math Renderer ----
+      function renderMarkdownAndMath(raw) {
+        const mathBlocks = [];
+        let text = escapeHtml(raw);
+
+        // 1. Extract block math $$...$$
+        text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match, math) => {
+          const id = `__MATH_BLOCK_${mathBlocks.length}__`;
+          mathBlocks.push({ id, math: math.trim(), display: true });
+          return id;
+        });
+
+        // 2. Extract inline math $...$
+        text = text.replace(/\$([^\$\n]+?)\$/g, (match, math) => {
+          const id = `__MATH_INLINE_${mathBlocks.length}__`;
+          mathBlocks.push({ id, math: math.trim(), display: false });
+          return id;
+        });
+
+        // 3. Render Markdown
+        // Code blocks: ```...```
+        text = text.replace(/```([\s\S]*?)```/g, (_, code) => {
+          return '<pre class="bg-zinc-950 border border-red-950/60 rounded p-3 my-2 overflow-x-auto text-xs font-mono text-red-300 relative"><code class="block whitespace-pre">' + code.replace(/^\n/, '') + '</code><div class="absolute top-1 right-1 text-[8px] text-red-900 font-mono select-none">SOURCE</div></pre>';
+        });
+
+        // Inline code
+        text = text.replace(/`([^`\n]+?)`/g, '<code class="bg-zinc-900 border border-cyan-950 px-1 py-0.5 rounded text-xs text-amber-300 font-mono">$1</code>');
+
+        // Bold
+        text = text.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
+
+        // Italic
+        text = text.replace(/\*(.+?)\*/g, '<em class="italic text-zinc-300">$1</em>');
+
+        // Bullet lists
+        text = text.replace(/(^|\n)- (.+)/g, (_, pre, item) => {
+          return pre + '<li class="list-disc ml-5 my-0.5 text-zinc-300">' + item + '</li>';
+        });
+        text = text.replace(/(<li class="list-disc.*<\/li>\n?)+/g, (match) => '<ul class="my-2">' + match + '</ul>');
+
+        // Numbered lists
+        text = text.replace(/(^|\n)\d+\.\s+(.+)/g, (_, pre, item) => {
+          return pre + '<li class="list-decimal ml-5 my-0.5 text-zinc-300">' + item + '</li>';
+        });
+        text = text.replace(/(<li class="list-decimal.*<\/li>\n?)+/g, (match) => {
+          if (match.includes('<ul')) return match;
+          return '<ol class="my-2">' + match + '</ol>';
+        });
+
+        // Line breaks
+        text = text.replace(/\n/g, '<br>');
+
+        // 4. Restore math placeholders with KaTeX rendered HTML
+        mathBlocks.forEach(item => {
+          let renderedHtml = '';
+          try {
+            renderedHtml = katex.renderToString(item.math, {
+              displayMode: item.display,
+              throwOnError: false
+            });
+          } catch (e) {
+            renderedHtml = `<span class="text-red-500 font-mono">${escapeHtml(item.math)}</span>`;
+          }
+          text = text.replace(item.id, renderedHtml);
+        });
+
+        return text;
+      }
+
+      function showTyping() {
+        DOM.typing.classList.remove('hidden');
+        DOM.abortBtn.classList.remove('hidden');
+        scrollChat();
+      }
+      function hideTyping() {
+        DOM.typing.classList.add('hidden');
+        DOM.abortBtn.classList.add('hidden');
+      }
+
+      let targetScrollTop = 0;
+      let isScrolling = false;
+
+      function scrollChat() {
+        targetScrollTop = DOM.messages.scrollHeight - DOM.messages.clientHeight;
+        if (!isScrolling) {
+          isScrolling = true;
+          smoothScrollLoop();
+        }
+      }
+
+      function smoothScrollLoop() {
+        if (!isScrolling) return; // Instantly stops if interrupted
+
+        const current = DOM.messages.scrollTop;
+        const dist = targetScrollTop - current;
+
+        if (Math.abs(dist) < 0.5) {
+          DOM.messages.scrollTop = targetScrollTop;
+          isScrolling = false;
+          return;
+        }
+
+        DOM.messages.scrollTop = current + dist * 0.15;
+        requestAnimationFrame(smoothScrollLoop);
+      }
+
+      // Interrupt smooth scrolling whenever the user interacts with the message view
+      function interruptScroll() {
+        isScrolling = false;
+      }
+      DOM.messages.addEventListener('wheel', interruptScroll, { passive: true });
+      DOM.messages.addEventListener('touchmove', interruptScroll, { passive: true });
+      DOM.messages.addEventListener('pointerdown', interruptScroll, { passive: true });
+
+      function addMessage(type, text, label) {
+        const wrap = document.createElement('div');
+        wrap.className = 'msg flex flex-col max-w-[85%] ' + 
+          (type === 'user' ? 'self-end items-end' : type === 'ultron' ? 'self-start items-start' : 'self-center items-center max-w-[95%]');
+
+        if (label) {
+          const lbl = document.createElement('div');
+          lbl.className = 'text-[9px] font-mono font-bold tracking-widest uppercase mb-1 px-1 ' +
+            (type === 'user' ? 'text-red-700' : 'text-red-300');
+          lbl.textContent = `[ ${label} ]`;
+          wrap.appendChild(lbl);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'px-4 py-3 rounded text-sm leading-relaxed border relative ' +
+          (type === 'user' ? 'bg-zinc-950 border-red-900/40 text-red-100 rounded-tr-none' : 
+           type === 'ultron' ? 'bg-black border-red-950 text-zinc-100 rounded-bl-none' :
+           type === 'error' ? 'bg-red-950/10 border-red-900/40 text-red-400 font-mono text-xs rounded' :
+           'bg-transparent border-none text-red-800 text-[10px] tracking-wide font-mono');
+
+        // Add Stark style HUD corner highlights to messages
+        if (type !== 'note') {
+          bubble.innerHTML += `
+            <div class="absolute top-0 left-0 w-1 h-1 border-t border-l border-red-600/60"></div>
+            <div class="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-red-600/60"></div>
+          `;
+        }
+
+        const contentNode = document.createElement('div');
+        if (type === 'ultron') {
+          contentNode.innerHTML = renderMarkdownAndMath(text);
+        } else if (type === 'error') {
+          contentNode.innerHTML = '<span class="mr-1">⚠ ERROR::</span> ' + escapeHtml(text);
+        } else {
+          contentNode.textContent = text;
+        }
+
+        bubble.prepend(contentNode);
+        wrap.appendChild(bubble);
+        DOM.messages.appendChild(wrap);
+        scrollChat();
+      }
+
+      function addNote(text) { addMessage('note', text); }
+
+      function setStatus(online) {
+        if (online) {
+          DOM.statusDot.className = 'w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]';
+          DOM.statusText.textContent = 'ACTIVE';
+          DOM.statusText.className = 'text-red-300 font-semibold tracking-widest';
+        } else {
+          DOM.statusDot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-700 animate-pulse';
+          DOM.statusText.textContent = 'OFFLINE';
+          DOM.statusText.className = 'text-zinc-650 font-semibold tracking-widest';
+        }
+      }
+
+      function addActivity(html, cls) {
+        const item = document.createElement('div');
+        item.className = 'p-3 rounded border text-[10px] font-mono leading-normal relative ' +
+          (cls === 'tool-call' ? 'bg-zinc-950 border-red-900 text-red-300' :
+           cls === 'tool-result-ok' ? 'bg-zinc-950/40 border-zinc-900 text-red-400' :
+           'bg-red-950/5 border-red-950/20 text-red-500');
+        
+        // Add corner highlights to log cards
+        item.innerHTML = html + `
+          <div class="absolute top-0 left-0 w-1 h-1 border-t border-l border-red-700/30"></div>
+          <div class="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-red-700/30"></div>
+        `;
+        
+        DOM.activityFeed.prepend(item);
+        while (DOM.activityFeed.children.length > ACTIVITY_MAX) {
+          DOM.activityFeed.removeChild(DOM.activityFeed.lastChild);
+        }
+      }
+
+      // ---- WebSocket Connection ----
+      function connectWS() {
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+
+        addNote('initiating uplink protocol…');
+
+        try {
+          ws = new WebSocket(WS_URL);
+        } catch (e) {
+          setStatus(false);
+          scheduleReconnect();
+          return;
+        }
+
+        ws.onopen = () => {
+          setStatus(true);
+          addNote('uplink link established');
+        };
+
+        ws.onclose = () => {
+          setStatus(false);
+          hideTyping();
+          scheduleReconnect();
+        };
+
+        ws.onerror = () => {
+          setStatus(false);
+          hideTyping();
+        };
+
+        ws.onmessage = (evt) => {
+          hideTyping();
+          let data;
+          try { data = JSON.parse(evt.data); } catch { return; }
+
+          switch (data.type) {
+            case 'history':
+              DOM.messages.innerHTML = '';
+              if (Array.isArray(data.messages)) {
+                data.messages.forEach(m => {
+                  if (m.role === 'user') {
+                    addMessage('user', m.content, 'OPERATOR');
+                  } else if (m.role === 'assistant') {
+                    addMessage('ultron', m.content, 'ULTRON');
+                  }
+                });
+              }
+              break;
+
+            case 'message':
+              addMessage('ultron', data.content, 'ULTRON');
+              speak(data.content);
+              break;
+
+            case 'error':
+              addMessage('error', data.message || 'Unknown error');
+              break;
+
+            case 'aborted':
+              addMessage('error', data.message || 'Protocol aborted.', 'ABORT');
+              hideTyping();
+              break;
+
+            case 'tool_calls':
+              if (Array.isArray(data.calls)) {
+                data.calls.forEach(tc => {
+                  const argsStr = tc.args ? escapeHtml(JSON.stringify(tc.args)).substring(0, 200) : '';
+                  addActivity(
+                    '<div class="text-[9px] font-bold text-red-600 uppercase mb-1">>> EXECUTE_CALL</div>' +
+                    '<div class="text-red-300 font-semibold font-mono">' + escapeHtml(tc.name || 'unknown') + '()</div>' +
+                    (argsStr ? '<div class="text-red-800 text-[9px] mt-1 break-all font-mono">' + argsStr + '</div>' : ''),
+                    'tool-call'
+                  );
+                });
+              }
+              break;
+
+            case 'tool_result':
+              const tr = data.result;
+              if (tr) {
+                const ok = tr.ok !== false;
+                const detail = JSON.stringify(tr);
+                const displayDetail = detail ? escapeHtml(detail).substring(0, 160) : '';
+                addActivity(
+                  '<div class="text-[9px] font-bold ' + (ok ? 'text-red-400' : 'text-red-500') + ' uppercase mb-1">>> RETURN_VAL</div>' +
+                  '<div class="text-zinc-400 font-mono">' + escapeHtml(data.name || '') + '</div>' +
+                  (displayDetail ? '<div class="text-red-900 text-[9px] mt-1 break-all font-mono">' + displayDetail + '</div>' : ''),
+                  ok ? 'tool-result-ok' : 'tool-result-fail'
+                );
+              }
+              break;
+          }
+        };
+      }
+
+      function scheduleReconnect() {
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          connectWS();
+        }, 3000);
+      }
+
+      let attachedFile = null;
+
+      // ---- Attachment Handling ----
+      DOM.attachBtn.addEventListener('click', () => {
+        DOM.fileInput.click();
+      });
+
+      DOM.fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        attachedFile = {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          base64: null,
+          text: null
+        };
+
+        const reader = new FileReader();
+
+        if (file.type.startsWith('image/')) {
+          reader.onload = (event) => {
+            const dataUrl = event.target.result;
+            attachedFile.base64 = dataUrl.split(',')[1];
+            DOM.previewThumb.innerHTML = `<img src="${dataUrl}" class="w-full h-full object-cover">`;
+            showPreview();
+          };
+          reader.readAsDataURL(file);
+        } else {
+          reader.onload = (event) => {
+            attachedFile.text = event.target.result;
+            DOM.previewThumb.innerHTML = `
+              <svg class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>`;
+            showPreview();
+          };
+          reader.readAsText(file);
+        }
+      });
+
+      function showPreview() {
+        DOM.previewName.textContent = attachedFile.name;
+        const kb = (attachedFile.size / 1024).toFixed(1);
+        DOM.previewSize.textContent = `${kb} KB`;
+        DOM.attachPreview.classList.remove('hidden');
+      }
+
+      function clearAttachment() {
+        attachedFile = null;
+        DOM.fileInput.value = '';
+        DOM.previewThumb.innerHTML = '';
+        DOM.attachPreview.classList.add('hidden');
+      }
+
+      DOM.previewRemove.addEventListener('click', clearAttachment);
+
+      // ---- Action Sending ----
+      function sendMessage() {
+        let text = DOM.userInput.value.trim();
+        if (!text && !attachedFile) return;
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          addMessage('error', 'CONNECTION_UPLINK_OFFLINE');
+          return;
+        }
+
+        const payload = { message: text };
+
+        if (attachedFile) {
+          if (attachedFile.base64) {
+            payload.image_base64 = attachedFile.base64;
+            addMessage('user', text ? `[Attached Image] ${text}` : '[Attached Image]', 'OPERATOR');
+          } else if (attachedFile.text !== null) {
+            const fileHeader = `[ATTACHED FILE: ${attachedFile.name}]\n\`\`\`\n${attachedFile.text}\n\`\`\`\n\n`;
+            payload.message = fileHeader + text;
+            addMessage('user', text ? `[Attached File: ${attachedFile.name}] ${text}` : `[Attached File: ${attachedFile.name}]`, 'OPERATOR');
+          }
+          clearAttachment();
+        } else {
+          addMessage('user', text, 'OPERATOR');
+        }
+
+        ws.send(JSON.stringify(payload));
+        DOM.userInput.value = '';
+        showTyping();
+      }
+
+      DOM.sendBtn.addEventListener('click', sendMessage);
+      DOM.userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+      });
+
+      DOM.abortBtn.addEventListener('click', () => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'abort' }));
+          addNote('sending emergency abort signal…');
+        }
+      });
+
+      // ---- System Stats polling ----
+      async function pollStats() {
+        try {
+          const res = await fetch(API_BASE + '/api/stats');
+          if (!res.ok) return;
+          const s = await res.json();
+
+          const cpu = s.cpu_pct !== undefined ? s.cpu_pct : s.cpu;
+          const ram = s.ram_pct !== undefined ? s.ram_pct : s.ram;
+          const disk = s.disk_pct !== undefined ? s.disk_pct : s.disk;
+          const batt = s.battery;
+
+          if (cpu !== undefined) {
+            DOM.cpuVal.textContent = cpu.toFixed(1) + '%';
+            DOM.cpuBar.style.width = cpu + '%';
+          }
+          if (ram !== undefined) {
+            DOM.ramVal.textContent = ram.toFixed(1) + '%';
+            DOM.ramBar.style.width = ram + '%';
+          }
+          if (disk !== undefined) {
+            DOM.diskVal.textContent = disk.toFixed(1) + '%';
+            DOM.diskBar.style.width = disk + '%';
+          }
+          if (batt !== undefined && batt !== null) {
+            DOM.battRow.classList.remove('hidden');
+            const percent = batt.percent !== undefined ? batt.percent : batt;
+            const plug = batt.plugged_in ? ' (charging)' : '';
+            DOM.battVal.textContent = percent + '%' + plug;
+          }
+        } catch (_) { /* silent */ }
+      }
+
+      statsTimer = setInterval(pollStats, 4000);
+      pollStats();
+
+      // ---- Voice Input (Web Speech API) ----
+      let recognition = null;
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (e) => {
+          const transcript = e.results[0][0].transcript;
+          DOM.userInput.value = transcript;
+          DOM.voiceHint.textContent = '';
+          DOM.micBtn.classList.remove('bg-red-950', 'text-white', 'border-red-500');
+        };
+
+        recognition.onerror = (e) => {
+          DOM.voiceHint.textContent = 'Voice error: ' + e.error;
+          DOM.micBtn.classList.remove('bg-red-950', 'text-white', 'border-red-500');
+        };
+
+        recognition.onend = () => {
+          DOM.micBtn.classList.remove('bg-red-950', 'text-white', 'border-red-500');
+        };
+      }
+
+      DOM.micBtn.addEventListener('click', () => {
+        if (!recognition) {
+          DOM.voiceHint.textContent = 'SPEECH_SYS_UNSUPPORTED';
+          return;
+        }
+        if (DOM.micBtn.classList.contains('bg-red-950')) {
+          recognition.stop();
+          DOM.micBtn.classList.remove('bg-red-950', 'text-white', 'border-red-500');
+          DOM.voiceHint.textContent = '';
+        } else {
+          recognition.start();
+          DOM.micBtn.classList.add('bg-red-950', 'text-white', 'border-red-500');
+          DOM.voiceHint.textContent = 'CAPTURING AUDIO UPLINK…';
+        }
+      });
+
+      let currentAudio = null;
+
+      // ---- Voice Output (Edge TTS API via Backend) ----
+      function speak(text) {
+        // Strip markdown/html/code blocks for clean TTS reading
+        let clean = text
+          .replace(/```[\s\S]*?```/g, ' ')
+          .replace(/`[^`]+`/g, ' ')
+          .replace(/\*\*(.+?)\*\*/g, '$1')
+          .replace(/\*(.+?)\*/g, '$1')
+          .replace(/^[-\d.]+\s*/gm, '')
+          .replace(/<[^>]+>/g, '');
+
+        clean = clean.replace(/\s+/g, ' ').trim();
+        if (!clean) return;
+
+        // Stop any currently playing speech
+        if (currentAudio) {
+          try {
+            currentAudio.pause();
+          } catch (e) {}
+          currentAudio = null;
+        }
+
+        const url = `${API_BASE}/api/tts?text=${encodeURIComponent(clean)}`;
+        currentAudio = new Audio(url);
+        currentAudio.play().catch(err => {
+          console.warn('Audio playback failed or was interrupted:', err);
+        });
+      }
+
+      if ('speechSynthesis' in window) {
+        speechSynthesis.getVoices();
+        speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+      }
+
+      // ---- Init ----
+      connectWS();
+    })();
+  </script>
+</body>
+</html>

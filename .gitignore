@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local history / memory files
+ultron_chat_history.json
+ultron_memory.json
+screenshots/
+
+# System-specific / IDE files
+.idea/
+.vscode/
+*.swp
+*.tmp
+.DS_Store
+Thumbs.db
