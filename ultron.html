@@ -8,156 +8,418 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-  
   <!-- Tailwind CSS v4 -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  
   <!-- KaTeX CSS & JS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 
   <style>
+    /* ═══════════════════════════════════════════
+       BASE & VARIABLES
+       ═══════════════════════════════════════════ */
+    :root {
+      --bg-void: #020204;
+      --bg-deep: #050508;
+      --bg-panel: #0a0a10;
+      --bg-surface: #101018;
+      --red: #dc2626;
+      --red-bright: #ef4444;
+      --red-dim: #991b1b;
+      --red-faint: #7f1d1d;
+      --red-ghost: rgba(220,38,38,0.08);
+      --red-glow: rgba(220,38,38,0.4);
+      --text-primary: #e4e4e7;
+      --text-secondary: #a1a1aa;
+      --text-dim: #71717a;
+      --text-faint: #3f3f46;
+    }
     body {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg-void);
+      color: var(--text-primary);
     }
-    .font-mono {
-      font-family: 'JetBrains Mono', monospace;
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ═══════════════════════════════════════════
+       SCROLLBAR
+       ═══════════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1c1c24; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--red); }
+
+    /* ═══════════════════════════════════════════
+       GLASS EFFECTS
+       ═══════════════════════════════════════════ */
+    .glass {
+      background: rgba(10, 10, 16, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(220, 38, 38, 0.1);
     }
-    /* Hide scrollbars but allow scrolling */
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
+    .glass-panel {
+      background: rgba(5, 5, 10, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(127, 29, 29, 0.25);
     }
-    ::-webkit-scrollbar-track {
-      background: transparent;
+    .glass-input {
+      background: rgba(10, 10, 16, 0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(127, 29, 29, 0.2);
     }
-    ::-webkit-scrollbar-thumb {
-      background: #1e293b;
+
+    /* ═══════════════════════════════════════════
+       HUD CORNER DECORATIONS
+       ═══════════════════════════════════════════ */
+    .hud-corners { position: relative; }
+    .hud-corners::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px;
+      width: 8px; height: 8px;
+      border-top: 1px solid rgba(220,38,38,0.35);
+      border-left: 1px solid rgba(220,38,38,0.35);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .hud-corners::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; right: -1px;
+      width: 8px; height: 8px;
+      border-bottom: 1px solid rgba(220,38,38,0.35);
+      border-right: 1px solid rgba(220,38,38,0.35);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .bubble-corners { position: relative; }
+    .bubble-corners::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 5px; height: 5px;
+      border-top: 1px solid rgba(220,38,38,0.2);
+      border-left: 1px solid rgba(220,38,38,0.2);
+      pointer-events: none;
+    }
+    .bubble-corners::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 5px; height: 5px;
+      border-bottom: 1px solid rgba(220,38,38,0.2);
+      border-right: 1px solid rgba(220,38,38,0.2);
+      pointer-events: none;
+    }
+
+    /* ═══════════════════════════════════════════
+       CHAT BUBBLE TYPES
+       ═══════════════════════════════════════════ */
+    .bubble-user {
+      background: rgba(12, 12, 20, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(220, 38, 38, 0.1);
+      border-top-right-radius: 4px !important;
+      color: #fecaca;
+    }
+    .bubble-user:hover {
+      border-color: rgba(220, 38, 38, 0.2);
+      box-shadow: 0 0 20px rgba(220,38,38,0.04);
+    }
+    .bubble-ultron {
+      background: rgba(5, 5, 10, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(127, 29, 29, 0.18);
+      border-left: 2px solid rgba(220, 38, 38, 0.3);
+      border-bottom-left-radius: 4px !important;
+      color: #d4d4d8;
+    }
+    .bubble-ultron:hover {
+      border-color: rgba(127, 29, 29, 0.3);
+      box-shadow: 0 0 20px rgba(220,38,38,0.04);
+    }
+    .bubble-error {
+      background: rgba(127, 29, 29, 0.06);
+      border: 1px solid rgba(220, 38, 38, 0.15);
+      color: #f87171;
+    }
+
+    /* ═══════════════════════════════════════════
+       KEYFRAME ANIMATIONS
+       ═══════════════════════════════════════════ */
+    @keyframes scanSweep {
+      0% { left: -25%; }
+      100% { left: 125%; }
+    }
+    @keyframes coreGlow {
+      0%, 100% {
+        box-shadow: 0 0 6px rgba(220,38,38,0.25), inset 0 0 3px rgba(220,38,38,0.1);
+      }
+      50% {
+        box-shadow: 0 0 18px rgba(220,38,38,0.55), inset 0 0 6px rgba(220,38,38,0.25);
+      }
+    }
+    @keyframes msgSlideIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes barShimmer {
+      0% { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+    @keyframes micRing {
+      0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.55); }
+      70% { box-shadow: 0 0 0 10px rgba(220,38,38,0); }
+      100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+    }
+    @keyframes activitySlide {
+      from { opacity: 0; transform: translateX(-8px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes statusGlow {
+      0%, 100% { box-shadow: 0 0 4px rgba(220,38,38,0.3); }
+      50% { box-shadow: 0 0 12px rgba(220,38,38,0.7), 0 0 24px rgba(220,38,38,0.15); }
+    }
+    @keyframes borderPulse {
+      0%, 100% { border-color: rgba(220,38,38,0.15); }
+      50% { border-color: rgba(220,38,38,0.45); box-shadow: 0 0 20px rgba(220,38,38,0.06); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ═══════════════════════════════════════════
+       COMPONENT STYLES
+       ═══════════════════════════════════════════ */
+
+    /* Header scan line */
+    .header-scan { position: relative; overflow: hidden; }
+    .header-scan::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: -25%;
+      width: 25%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--red), transparent);
+      animation: scanSweep 4s linear infinite;
+      pointer-events: none;
+    }
+
+    /* Message entrance */
+    .msg { animation: msgSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    /* Stat bar */
+    .stat-bar-track {
+      height: 6px;
+      background: rgba(24, 24, 30, 0.8);
+      border: 1px solid rgba(127, 29, 29, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .stat-bar-fill {
+      height: 100%;
       border-radius: 2px;
+      background: linear-gradient(90deg, #7f1d1d, #dc2626, #ef4444, #dc2626, #7f1d1d);
+      background-size: 200% 100%;
+      animation: barShimmer 4s linear infinite;
+      box-shadow: 0 0 8px rgba(220, 38, 38, 0.25);
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #dc2626;
+
+    /* Typing indicator dots */
+    .typing-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--red);
+      display: inline-block;
+      animation: typingBounce 1.4s ease-in-out infinite;
     }
-    /* HUD Corner bracket decoration */
-    .hud-brackets::before, .hud-brackets::after {
-      content: '';
+
+    /* Mic active state */
+    .mic-active {
+      animation: micRing 1.5s ease-out infinite !important;
+      background: rgba(127, 29, 29, 0.4) !important;
+      border-color: var(--red) !important;
+      color: white !important;
+    }
+
+    /* Activity card entrance */
+    .activity-card { animation: activitySlide 0.3s ease-out forwards; }
+
+    /* Input focus glow */
+    .input-container:focus-within {
+      animation: borderPulse 2s ease-in-out infinite;
+      box-shadow: 0 0 25px rgba(220, 38, 38, 0.05);
+    }
+
+    /* Button hover glow */
+    .btn-glow { transition: all 0.2s ease; }
+    .btn-glow:hover {
+      box-shadow: 0 0 14px rgba(220, 38, 38, 0.25);
+      border-color: rgba(220, 38, 38, 0.4) !important;
+    }
+
+    /* Status dot active */
+    .status-active { animation: statusGlow 2s ease-in-out infinite; }
+
+    /* Markdown code blocks */
+    .md-code-block {
+      background: rgba(5, 5, 10, 0.9);
+      border: 1px solid rgba(127, 29, 29, 0.2);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 8px 0;
+      overflow-x: auto;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #fca5a5;
+      position: relative;
+      line-height: 1.6;
+    }
+    .md-code-block .code-label {
       position: absolute;
-      width: 6px;
-      height: 6px;
-      border-color: #dc2626;
-      border-style: solid;
-      pointer-events: none;
+      top: 4px; right: 8px;
+      font-size: 8px;
+      color: rgba(127, 29, 29, 0.4);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      user-select: none;
     }
-    .hud-brackets::before {
-      top: -1px;
-      left: -1px;
-      border-width: 1px 0 0 1px;
+
+    /* Grid backgrounds */
+    .grid-bg {
+      background-image:
+        linear-gradient(to right, rgba(220,38,38,0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(220,38,38,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
     }
-    .hud-brackets::after {
-      top: -1px;
-      right: -1px;
-      border-width: 1px 1px 0 0;
+    .grid-bg-fine {
+      background-image:
+        linear-gradient(to right, rgba(220,38,38,0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(220,38,38,0.015) 1px, transparent 1px);
+      background-size: 20px 20px;
     }
-    .hud-brackets-bottom::before, .hud-brackets-bottom::after {
-      content: '';
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      border-color: #dc2626;
-      border-style: solid;
-      pointer-events: none;
+
+    /* Section divider line */
+    .section-divider {
+      border-bottom: 1px solid rgba(127, 29, 29, 0.18);
     }
-    .hud-brackets-bottom::before {
-      bottom: -1px;
-      left: -1px;
-      border-width: 0 0 1px 1px;
+
+    /* Timestamp style */
+    .msg-timestamp {
+      font-size: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      opacity: 0.3;
+      margin-top: 6px;
+      letter-spacing: 0.03em;
     }
-    .hud-brackets-bottom::after {
-      bottom: -1px;
-      right: -1px;
-      border-width: 0 1px 1px 0;
+
+    /* ═══════════════════════════════════════════
+       REDUCED MOTION
+       ═══════════════════════════════════════════ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
-<body class="bg-black text-red-400 h-screen w-screen overflow-hidden flex flex-col select-none">
+<body class="h-screen w-screen overflow-hidden flex flex-col select-none">
 
-  <!-- ========== HEADER ========== -->
-  <header class="flex items-center justify-between px-6 py-4 border-b border-red-950 bg-zinc-950 shrink-0 relative">
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="header-scan glass flex items-center justify-between px-6 py-3 shrink-0">
     <div class="flex items-center gap-4">
-      <!-- Jarvis/Stark style dynamic logo -->
-      <div class="relative w-10 h-10 border border-red-800 flex items-center justify-center bg-zinc-900 shrink-0">
-        <div class="absolute inset-0.5 border border-red-900/50"></div>
-        <span class="font-mono text-sm font-bold text-red-400">UL</span>
-        <div class="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 border-t border-l border-red-500"></div>
-        <div class="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 border-b border-r border-red-500"></div>
+      <!-- Animated Logo -->
+      <div class="relative w-11 h-11 flex items-center justify-center shrink-0">
+        <div class="absolute inset-0 border border-red-900/40 rounded-sm"></div>
+        <div class="absolute inset-1.5 border border-red-700/70 rounded-sm flex items-center justify-center" style="animation: coreGlow 3s ease-in-out infinite; background: rgba(127,29,29,0.12);">
+          <span class="font-mono text-sm font-bold text-red-400 tracking-wider">U</span>
+        </div>
+        <div class="absolute -top-px -left-px w-2 h-2 border-t border-l border-red-500"></div>
+        <div class="absolute -top-px -right-px w-2 h-2 border-t border-r border-red-500"></div>
+        <div class="absolute -bottom-px -left-px w-2 h-2 border-b border-l border-red-500"></div>
+        <div class="absolute -bottom-px -right-px w-2 h-2 border-b border-r border-red-500"></div>
       </div>
+
       <div>
-        <h1 class="font-mono text-sm font-bold tracking-widest text-white flex items-center gap-2">
-          ULTRON <span class="text-[9px] px-1 py-0.2 bg-red-950 border border-red-800 text-red-300 font-normal rounded">v2.1</span>
+        <h1 class="font-mono text-sm font-bold tracking-[0.2em] text-white flex items-center gap-2">
+          ULTRON
+          <span class="text-[8px] px-1.5 py-0.5 rounded text-red-300 font-normal" style="background: linear-gradient(135deg, rgba(127,29,29,0.45), rgba(220,38,38,0.15)); border: 1px solid rgba(220,38,38,0.25);">v3.0</span>
         </h1>
-        <p class="text-[9px] text-red-700 tracking-widest uppercase font-mono">Tactical Systems Control & Diagnostics</p>
+        <p class="text-[9px] tracking-[0.25em] uppercase font-mono" style="color: var(--red-dim);">Tactical Systems Control & Diagnostics</p>
       </div>
     </div>
-    
-    <!-- Top-right Info Telemetry -->
-    <div class="flex items-center gap-4 font-mono text-[10px]">
-      <div class="hidden sm:flex flex-col items-end text-zinc-500 leading-tight">
-        <span>LOC: 0x7FFF00F2</span>
-        <span>SYS: ONLINE_CORE</span>
+
+    <div class="flex items-center gap-3 font-mono text-[10px]">
+      <!-- Session Info & Uptime -->
+      <div class="hidden lg:flex flex-col items-end leading-tight" style="color: var(--text-faint);">
+        <span class="tracking-wider">SESSION: ALPHA-9</span>
+        <span id="uptimeDisplay" class="tabular-nums text-red-900">00:00:00</span>
       </div>
-      
+      <div class="hidden lg:block w-px h-6" style="background: rgba(127,29,29,0.25);"></div>
+
       <!-- ABORT BUTTON -->
-      <button id="abortBtn" class="hidden flex items-center gap-1.5 px-3 py-1 bg-red-950 hover:bg-red-900 border border-red-500 rounded text-red-400 hover:text-white font-bold cursor-pointer transition-colors" title="Abort Active Protocol">
-        <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
+      <button id="abortBtn" class="hidden items-center gap-1.5 px-3 py-1.5 rounded text-red-400 hover:text-white font-bold cursor-pointer transition-all btn-glow" style="background: rgba(127,29,29,0.25); border: 1px solid rgba(220,38,38,0.45);" title="Abort Active Protocol">
+        <span class="w-1.5 h-1.5 bg-red-500 rounded-full" style="animation: statusGlow 1s ease-in-out infinite;"></span>
         ABORT
       </button>
 
-      <div class="flex items-center gap-2 px-3 py-1.5 bg-zinc-950 border border-red-900 rounded relative">
-        <div id="statusDot" class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-        <span id="statusText" class="text-red-300 font-semibold tracking-wider">ACTIVE</span>
-        <div class="absolute top-0 left-0 w-1 h-1 border-t border-l border-red-500"></div>
-        <div class="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-red-500"></div>
+      <!-- Status Indicator -->
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded hud-corners" style="background: rgba(5,5,10,0.8); border: 1px solid rgba(127,29,29,0.3);">
+        <div id="statusDot" class="w-2 h-2 rounded-full bg-red-500 status-active"></div>
+        <span id="statusText" class="text-red-300 font-semibold tracking-widest text-[10px]">ACTIVE</span>
       </div>
     </div>
   </header>
 
-  <!-- ========== MAIN CONSOLE LAYOUT ========== -->
+  <!-- ═══════════════ MAIN CONSOLE LAYOUT ═══════════════ -->
   <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-    
+
     <!-- CHAT COLUMN -->
-    <section class="flex-1 flex flex-col min-w-0 border-r border-red-950 bg-black relative">
-      
-      <!-- Subtle tactical background grids -->
-      <div class="absolute inset-0 bg-[linear-gradient(to_right,#08334407_1px,transparent_1px),linear-gradient(to_bottom,#08334407_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+    <section class="flex-1 flex flex-col min-w-0 relative" style="background: var(--bg-deep); border-right: 1px solid rgba(127,29,29,0.15);">
+      <div class="absolute inset-0 grid-bg pointer-events-none"></div>
 
       <!-- MESSAGES VIEW -->
-      <div id="messages" class="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6 relative z-1">
-        <!-- Messages populate dynamically -->
-      </div>
-      
+      <div id="messages" class="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5 relative z-[1]"></div>
+
       <!-- TYPING INDICATOR -->
-      <div id="typingIndicator" class="hidden px-6 py-3 shrink-0 relative z-1">
-        <div class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-red-900 rounded font-mono text-xs">
-          <span class="text-red-500 animate-pulse">COMPUTING RESPONSE</span>
-          <span class="w-1 h-3 bg-red-500 animate-bounce" style="animation-delay: 0.1s"></span>
-          <span class="w-1 h-3 bg-red-500 animate-bounce" style="animation-delay: 0.2s"></span>
+      <div id="typingIndicator" class="hidden px-6 py-3 shrink-0 relative z-[1]">
+        <div class="glass inline-flex items-center gap-3 px-5 py-2.5 rounded font-mono text-xs">
+          <span class="text-red-500 tracking-wider text-[10px]">COMPUTING RESPONSE</span>
+          <div class="flex items-center gap-1">
+            <span class="typing-dot" style="animation-delay: 0s"></span>
+            <span class="typing-dot" style="animation-delay: 0.15s"></span>
+            <span class="typing-dot" style="animation-delay: 0.3s"></span>
+          </div>
         </div>
       </div>
-      
+
       <!-- INPUT BAR -->
-      <div class="p-6 border-t border-red-950 bg-zinc-950 shrink-0 relative z-1">
-        
+      <div class="p-5 shrink-0 relative z-[1]" style="background: rgba(5,5,10,0.88); border-top: 1px solid rgba(127,29,29,0.15);">
+
         <!-- ATTACHMENT PREVIEW PANEL -->
-        <div id="attachmentPreview" class="hidden flex items-center gap-3 p-2 mb-2 bg-black border border-red-950 rounded relative font-mono text-[10px]">
+        <div id="attachmentPreview" class="hidden flex items-center gap-3 p-2.5 mb-3 rounded glass-panel font-mono text-[10px]">
           <div class="flex items-center gap-2 flex-1 min-w-0">
-            <!-- Thumbnail or icon placeholder -->
-            <div id="previewThumbnail" class="w-8 h-8 rounded border border-red-900 bg-zinc-950 overflow-hidden flex items-center justify-center shrink-0"></div>
+            <div id="previewThumbnail" class="w-9 h-9 rounded overflow-hidden flex items-center justify-center shrink-0" style="background: var(--bg-panel); border: 1px solid rgba(127,29,29,0.25);"></div>
             <div class="flex flex-col min-w-0">
               <span id="previewName" class="text-white font-bold truncate">filename.txt</span>
-              <span id="previewSize" class="text-red-700">25.4 KB</span>
+              <span id="previewSize" style="color: var(--red-dim);">25.4 KB</span>
             </div>
           </div>
-          <button id="previewRemove" class="w-6 h-6 rounded border border-red-900 flex items-center justify-center hover:bg-red-950/45 text-red-400 hover:text-white cursor-pointer" title="Remove attachment">
+          <button id="previewRemove" class="w-7 h-7 rounded flex items-center justify-center hover:bg-red-950/40 text-red-400 hover:text-white cursor-pointer transition-colors" style="border: 1px solid rgba(127,29,29,0.25);" title="Remove attachment">
             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -165,25 +427,23 @@
           </button>
         </div>
 
-        <div class="relative flex items-center gap-2 p-2 bg-black border border-red-900/60 rounded focus-within:border-red-500 transition-colors">
-          <!-- Corners decoration -->
-          <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-red-600"></div>
-          <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-red-600"></div>
+        <div class="input-container relative flex items-center gap-2 p-2 rounded glass-input transition-all">
+          <div class="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-red-600/30 pointer-events-none"></div>
+          <div class="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-red-600/30 pointer-events-none"></div>
 
-          <!-- Hidden File Input -->
           <input type="file" id="fileInput" class="hidden">
 
           <!-- Attachment Button -->
-          <button id="attachBtn" class="w-10 h-10 rounded border border-red-900 flex items-center justify-center cursor-pointer text-red-400 hover:text-white hover:bg-red-950/40 transition-colors" title="Attach File/Image">
+          <button id="attachBtn" class="w-10 h-10 rounded flex items-center justify-center cursor-pointer text-red-400 hover:text-white transition-all btn-glow" style="border: 1px solid rgba(127,29,29,0.25);" title="Attach File/Image">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path>
             </svg>
           </button>
 
-          <input id="userInput" type="text" placeholder="ENTER INSTRUCTION PROTOCOL..." autocomplete="off" spellcheck="false" 
-            class="flex-1 bg-transparent border-none outline-none text-white text-sm py-2 px-3 placeholder-red-900 font-mono tracking-wider">
-          
-          <button id="micBtn" class="w-10 h-10 rounded border border-red-900 flex items-center justify-center cursor-pointer text-red-400 hover:text-white hover:bg-red-950/40 transition-colors" title="Voice Input">
+          <input id="userInput" type="text" placeholder="ENTER INSTRUCTION PROTOCOL..." autocomplete="off" spellcheck="false"
+            class="flex-1 bg-transparent border-none outline-none text-white text-sm py-2 px-3 placeholder:text-red-900/50 font-mono tracking-wider">
+
+          <button id="micBtn" class="w-10 h-10 rounded flex items-center justify-center cursor-pointer text-red-400 hover:text-white transition-all btn-glow" style="border: 1px solid rgba(127,29,29,0.25);" title="Voice Input">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="1" width="6" height="13" rx="3"/>
               <path d="M19 10v1a7 7 0 01-14 0v-1"/>
@@ -191,89 +451,108 @@
               <line x1="8" y1="23" x2="16" y2="23"/>
             </svg>
           </button>
-          
-          <button id="sendBtn" class="w-10 h-10 rounded bg-red-600 hover:bg-red-500 text-white flex items-center justify-center cursor-pointer font-bold transition-transform active:scale-95" title="Send Message">
+
+          <button id="sendBtn" class="w-10 h-10 rounded text-white flex items-center justify-center cursor-pointer font-bold transition-all active:scale-95 btn-glow" style="background: linear-gradient(135deg, #dc2626, #991b1b); border: 1px solid rgba(239,68,68,0.25);" title="Send Message">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"/>
               <polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
           </button>
         </div>
-        <div id="voiceHint" class="text-center mt-2 text-[9px] text-red-800 tracking-widest font-mono h-4 uppercase"></div>
+        <div id="voiceHint" class="text-center mt-2 text-[9px] tracking-widest font-mono h-4 uppercase" style="color: var(--red-dim);"></div>
       </div>
     </section>
 
     <!-- SIDEBAR / HUD PANELS -->
-    <aside class="w-full md:w-80 flex flex-col bg-zinc-950 shrink-0 font-mono select-none relative">
-      
-      <!-- Outer grid layer -->
-      <div class="absolute inset-0 bg-[linear-gradient(to_right,#08334404_1px,transparent_1px),linear-gradient(to_bottom,#08334404_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
+    <aside class="w-full md:w-80 flex flex-col shrink-0 font-mono select-none relative" style="background: var(--bg-panel);">
+      <div class="absolute inset-0 grid-bg-fine pointer-events-none"></div>
 
-      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 relative z-1">
-        
+      <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-5 relative z-[1]">
+
         <!-- SYSTEM VITALS -->
-        <div id="vitalsContainer" class="border border-red-950 rounded bg-black p-4 relative hud-brackets hud-brackets-bottom">
-          <div class="flex items-center justify-between text-xs font-bold tracking-widest text-red-400 uppercase mb-4 border-b border-red-950 pb-2">
+        <div id="vitalsContainer" class="glass-panel rounded-lg p-4 hud-corners">
+          <div class="flex items-center justify-between text-[10px] font-bold tracking-[0.15em] text-red-400 uppercase mb-4 pb-2 section-divider">
             <span>[ SYSTEM TELEMETRY ]</span>
-            <span class="text-[9px] text-red-700">RT-09</span>
+            <span class="text-[8px]" style="color: var(--red-dim);">RT-09</span>
           </div>
-          
           <div class="flex flex-col gap-4">
             <!-- CPU -->
-            <div class="flex flex-col gap-1.5">
-              <div class="flex justify-between text-2xs">
-                <span class="text-red-700">CPU.CORE.PROCESS</span>
-                <span id="cpuVal" class="text-white font-bold">—</span>
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between text-[10px]">
+                <span style="color: var(--red-dim);">CPU.CORE.PROCESS</span>
+                <span id="cpuVal" class="text-white font-bold tabular-nums">—</span>
               </div>
-              <div class="h-2 bg-zinc-900 border border-red-950 p-[1px] flex gap-[2px]">
-                <div id="cpuBar" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+              <div class="stat-bar-track">
+                <div id="cpuBar" class="stat-bar-fill" style="width: 0%"></div>
               </div>
             </div>
-            
             <!-- RAM -->
-            <div class="flex flex-col gap-1.5">
-              <div class="flex justify-between text-2xs">
-                <span class="text-red-700">MEM.USAGE.ALLOC</span>
-                <span id="ramVal" class="text-white font-bold">—</span>
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between text-[10px]">
+                <span style="color: var(--red-dim);">MEM.USAGE.ALLOC</span>
+                <span id="ramVal" class="text-white font-bold tabular-nums">—</span>
               </div>
-              <div class="h-2 bg-zinc-900 border border-red-950 p-[1px] flex gap-[2px]">
-                <div id="ramBar" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+              <div class="stat-bar-track">
+                <div id="ramBar" class="stat-bar-fill" style="width: 0%"></div>
               </div>
             </div>
-            
             <!-- Disk -->
-            <div class="flex flex-col gap-1.5">
-              <div class="flex justify-between text-2xs">
-                <span class="text-red-700">STRG.SECT.INDEX</span>
-                <span id="diskVal" class="text-white font-bold">—</span>
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between text-[10px]">
+                <span style="color: var(--red-dim);">STRG.SECT.INDEX</span>
+                <span id="diskVal" class="text-white font-bold tabular-nums">—</span>
               </div>
-              <div class="h-2 bg-zinc-900 border border-red-950 p-[1px] flex gap-[2px]">
-                <div id="diskBar" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+              <div class="stat-bar-track">
+                <div id="diskBar" class="stat-bar-fill" style="width: 0%"></div>
               </div>
             </div>
-            
             <!-- Battery -->
-            <div id="battRow" class="hidden border-t border-red-950 pt-3">
+            <div id="battRow" class="hidden pt-3 section-divider" style="border-bottom: none; border-top: 1px solid rgba(127,29,29,0.18);">
               <div class="flex items-center justify-between">
-                <span class="text-red-700 text-[10px] font-mono">BATTERY.CAP</span>
-                <div class="flex items-center gap-2">
-                  <span id="battVal" class="text-white font-bold text-[11px] font-mono">—</span>
-                </div>
+                <span class="text-[10px]" style="color: var(--red-dim);">BATTERY.CAP</span>
+                <span id="battVal" class="text-white font-bold text-[11px] tabular-nums">—</span>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- SESSION METRICS (cosmetic info panel) -->
+        <div class="glass-panel rounded-lg p-4 hud-corners">
+          <div class="flex items-center justify-between text-[10px] font-bold tracking-[0.15em] text-red-400 uppercase mb-3 pb-2 section-divider">
+            <span>[ SESSION_METRICS ]</span>
+            <div class="flex items-center gap-1.5">
+              <span class="w-1 h-1 rounded-full bg-red-500" style="animation: statusGlow 3s ease-in-out infinite;"></span>
+              <span class="text-[8px]" style="color: var(--red-dim);">LIVE</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-[9px]">
+            <div>
+              <div style="color: var(--red-dim);" class="mb-0.5">PROTOCOL</div>
+              <div style="color: var(--text-dim);">WS-ULTRON-v3</div>
+            </div>
+            <div>
+              <div style="color: var(--red-dim);" class="mb-0.5">CIPHER</div>
+              <div style="color: var(--text-dim);">AES-256-GCM</div>
+            </div>
+            <div>
+              <div style="color: var(--red-dim);" class="mb-0.5">ENDPOINT</div>
+              <div style="color: var(--text-dim);">0x7FFF:8765</div>
+            </div>
+            <div>
+              <div style="color: var(--red-dim);" class="mb-0.5">LATENCY</div>
+              <div style="color: var(--text-dim);" id="latencyDisplay" class="tabular-nums">—</div>
+            </div>
+          </div>
+        </div>
+
         <!-- ACTIVITY LOG -->
-        <div class="flex-1 flex flex-col border border-red-950 rounded bg-black p-4 min-h-[250px] relative hud-brackets hud-brackets-bottom">
-          <div class="flex items-center justify-between text-xs font-bold tracking-widest text-red-400 uppercase mb-3 border-b border-red-950 pb-2 shrink-0">
+        <div class="flex-1 flex flex-col glass-panel rounded-lg p-4 min-h-[250px] hud-corners">
+          <div class="flex items-center justify-between text-[10px] font-bold tracking-[0.15em] text-red-400 uppercase mb-3 pb-2 shrink-0 section-divider">
             <span>[ EVENT_STREAM ]</span>
-            <span class="text-[9px] text-red-700">STDOUT</span>
+            <span class="text-[8px]" style="color: var(--red-dim);">STDOUT</span>
           </div>
           <div class="flex-1 overflow-y-auto pr-1">
-            <div id="activityFeed" class="flex flex-col gap-2">
-              <!-- Activities list dynamic -->
-            </div>
+            <div id="activityFeed" class="flex flex-col gap-2"></div>
           </div>
         </div>
 
@@ -286,7 +565,7 @@
     (() => {
       'use strict';
 
-      // ---- DOM binds ----
+      // ═══════ DOM BINDS ═══════
       const DOM = {
         statusDot:       document.getElementById('statusDot'),
         statusText:      document.getElementById('statusText'),
@@ -314,6 +593,8 @@
         previewSize:     document.getElementById('previewSize'),
         previewRemove:   document.getElementById('previewRemove'),
         abortBtn:        document.getElementById('abortBtn'),
+        uptimeDisplay:   document.getElementById('uptimeDisplay'),
+        latencyDisplay:  document.getElementById('latencyDisplay'),
       };
 
       const API_BASE  = 'http://127.0.0.1:8765';
@@ -324,14 +605,14 @@
       let reconnectTimer = null;
       let statsTimer = null;
 
-      // ---- Basic Helpers ----
+      // ═══════ HELPERS ═══════
       function escapeHtml(str) {
         const d = document.createElement('div');
         d.appendChild(document.createTextNode(str));
         return d.innerHTML;
       }
 
-      // ---- Markdown & KaTeX Math Renderer ----
+      // ═══════ MARKDOWN & KATEX MATH RENDERER ═══════
       function renderMarkdownAndMath(raw) {
         const mathBlocks = [];
         let text = escapeHtml(raw);
@@ -353,11 +634,11 @@
         // 3. Render Markdown
         // Code blocks: ```...```
         text = text.replace(/```([\s\S]*?)```/g, (_, code) => {
-          return '<pre class="bg-zinc-950 border border-red-950/60 rounded p-3 my-2 overflow-x-auto text-xs font-mono text-red-300 relative"><code class="block whitespace-pre">' + code.replace(/^\n/, '') + '</code><div class="absolute top-1 right-1 text-[8px] text-red-900 font-mono select-none">SOURCE</div></pre>';
+          return '<pre class="md-code-block"><code class="block whitespace-pre">' + code.replace(/^\n/, '') + '</code><span class="code-label">SOURCE</span></pre>';
         });
 
         // Inline code
-        text = text.replace(/`([^`\n]+?)`/g, '<code class="bg-zinc-900 border border-cyan-950 px-1 py-0.5 rounded text-xs text-amber-300 font-mono">$1</code>');
+        text = text.replace(/`([^`\n]+?)`/g, '<code style="background: rgba(5,5,10,0.9); border: 1px solid rgba(127,29,29,0.18); padding: 1px 6px; border-radius: 4px; font-size: 12px; color: #fbbf24; font-family: JetBrains Mono, monospace;">$1</code>');
 
         // Bold
         text = text.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
@@ -400,6 +681,7 @@
         return text;
       }
 
+      // ═══════ TYPING & SCROLL ═══════
       function showTyping() {
         DOM.typing.classList.remove('hidden');
         DOM.abortBtn.classList.remove('hidden');
@@ -422,7 +704,7 @@
       }
 
       function smoothScrollLoop() {
-        if (!isScrolling) return; // Instantly stops if interrupted
+        if (!isScrolling) return;
 
         const current = DOM.messages.scrollTop;
         const dist = targetScrollTop - current;
@@ -437,40 +719,36 @@
         requestAnimationFrame(smoothScrollLoop);
       }
 
-      // Interrupt smooth scrolling whenever the user interacts with the message view
-      function interruptScroll() {
-        isScrolling = false;
-      }
+      function interruptScroll() { isScrolling = false; }
       DOM.messages.addEventListener('wheel', interruptScroll, { passive: true });
       DOM.messages.addEventListener('touchmove', interruptScroll, { passive: true });
       DOM.messages.addEventListener('pointerdown', interruptScroll, { passive: true });
 
+      // ═══════ MESSAGE RENDERING ═══════
       function addMessage(type, text, label) {
         const wrap = document.createElement('div');
-        wrap.className = 'msg flex flex-col max-w-[85%] ' + 
+        wrap.className = 'msg flex flex-col max-w-[85%] ' +
           (type === 'user' ? 'self-end items-end' : type === 'ultron' ? 'self-start items-start' : 'self-center items-center max-w-[95%]');
 
         if (label) {
           const lbl = document.createElement('div');
-          lbl.className = 'text-[9px] font-mono font-bold tracking-widest uppercase mb-1 px-1 ' +
-            (type === 'user' ? 'text-red-700' : 'text-red-300');
+          lbl.className = 'text-[9px] font-mono font-bold tracking-[0.2em] uppercase mb-1.5 px-0.5 ' +
+            (type === 'user' ? 'text-red-700' : 'text-red-400');
           lbl.textContent = `[ ${label} ]`;
           wrap.appendChild(lbl);
         }
 
         const bubble = document.createElement('div');
-        bubble.className = 'px-4 py-3 rounded text-sm leading-relaxed border relative ' +
-          (type === 'user' ? 'bg-zinc-950 border-red-900/40 text-red-100 rounded-tr-none' : 
-           type === 'ultron' ? 'bg-black border-red-950 text-zinc-100 rounded-bl-none' :
-           type === 'error' ? 'bg-red-950/10 border-red-900/40 text-red-400 font-mono text-xs rounded' :
-           'bg-transparent border-none text-red-800 text-[10px] tracking-wide font-mono');
-
-        // Add Stark style HUD corner highlights to messages
-        if (type !== 'note') {
-          bubble.innerHTML += `
-            <div class="absolute top-0 left-0 w-1 h-1 border-t border-l border-red-600/60"></div>
-            <div class="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-red-600/60"></div>
-          `;
+        const baseClass = 'px-4 py-3 rounded-lg text-sm leading-relaxed relative';
+        if (type === 'user') {
+          bubble.className = baseClass + ' bubble-user bubble-corners';
+        } else if (type === 'ultron') {
+          bubble.className = baseClass + ' bubble-ultron bubble-corners';
+        } else if (type === 'error') {
+          bubble.className = baseClass + ' bubble-error bubble-corners font-mono text-xs';
+        } else {
+          bubble.className = 'px-4 py-2 text-[10px] tracking-wide font-mono';
+          bubble.style.color = 'rgba(127,29,29,0.55)';
         }
 
         const contentNode = document.createElement('div');
@@ -482,7 +760,17 @@
           contentNode.textContent = text;
         }
 
-        bubble.prepend(contentNode);
+        bubble.appendChild(contentNode);
+
+        // Timestamp
+        if (type !== 'note') {
+          const ts = document.createElement('div');
+          ts.className = 'msg-timestamp';
+          const now = new Date();
+          ts.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          bubble.appendChild(ts);
+        }
+
         wrap.appendChild(bubble);
         DOM.messages.appendChild(wrap);
         scrollChat();
@@ -492,36 +780,38 @@
 
       function setStatus(online) {
         if (online) {
-          DOM.statusDot.className = 'w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]';
+          DOM.statusDot.className = 'w-2 h-2 rounded-full bg-red-500 status-active';
           DOM.statusText.textContent = 'ACTIVE';
-          DOM.statusText.className = 'text-red-300 font-semibold tracking-widest';
+          DOM.statusText.className = 'text-red-300 font-semibold tracking-widest text-[10px]';
         } else {
-          DOM.statusDot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-700 animate-pulse';
+          DOM.statusDot.className = 'w-2 h-2 rounded-full bg-zinc-700';
           DOM.statusText.textContent = 'OFFLINE';
-          DOM.statusText.className = 'text-zinc-650 font-semibold tracking-widest';
+          DOM.statusText.className = 'text-zinc-600 font-semibold tracking-widest text-[10px]';
         }
       }
 
+      // ═══════ ACTIVITY LOG ═══════
       function addActivity(html, cls) {
         const item = document.createElement('div');
-        item.className = 'p-3 rounded border text-[10px] font-mono leading-normal relative ' +
-          (cls === 'tool-call' ? 'bg-zinc-950 border-red-900 text-red-300' :
-           cls === 'tool-result-ok' ? 'bg-zinc-950/40 border-zinc-900 text-red-400' :
-           'bg-red-950/5 border-red-950/20 text-red-500');
-        
-        // Add corner highlights to log cards
-        item.innerHTML = html + `
-          <div class="absolute top-0 left-0 w-1 h-1 border-t border-l border-red-700/30"></div>
-          <div class="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-red-700/30"></div>
-        `;
-        
+        item.className = 'activity-card p-3 rounded text-[10px] font-mono leading-normal relative hud-corners';
+
+        if (cls === 'tool-call') {
+          item.style.cssText = 'background: rgba(10,10,16,0.7); border: 1px solid rgba(127,29,29,0.25); border-left: 2px solid rgba(220,38,38,0.45); color: #fca5a5;';
+        } else if (cls === 'tool-result-ok') {
+          item.style.cssText = 'background: rgba(10,10,16,0.35); border: 1px solid rgba(39,39,42,0.35); color: #f87171;';
+        } else {
+          item.style.cssText = 'background: rgba(127,29,29,0.04); border: 1px solid rgba(127,29,29,0.12); color: #ef4444;';
+        }
+
+        item.innerHTML = html;
+
         DOM.activityFeed.prepend(item);
         while (DOM.activityFeed.children.length > ACTIVITY_MAX) {
           DOM.activityFeed.removeChild(DOM.activityFeed.lastChild);
         }
       }
 
-      // ---- WebSocket Connection ----
+      // ═══════ WEBSOCKET CONNECTION ═══════
       function connectWS() {
         if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
 
@@ -624,9 +914,9 @@
         }, 3000);
       }
 
+      // ═══════ ATTACHMENT HANDLING ═══════
       let attachedFile = null;
 
-      // ---- Attachment Handling ----
       DOM.attachBtn.addEventListener('click', () => {
         DOM.fileInput.click();
       });
@@ -685,7 +975,7 @@
 
       DOM.previewRemove.addEventListener('click', clearAttachment);
 
-      // ---- Action Sending ----
+      // ═══════ MESSAGE SENDING ═══════
       function sendMessage() {
         let text = DOM.userInput.value.trim();
         if (!text && !attachedFile) return;
@@ -727,10 +1017,14 @@
         }
       });
 
-      // ---- System Stats polling ----
+      // ═══════ SYSTEM STATS POLLING ═══════
       async function pollStats() {
         try {
+          const t0 = performance.now();
           const res = await fetch(API_BASE + '/api/stats');
+          const latency = Math.round(performance.now() - t0);
+          if (DOM.latencyDisplay) DOM.latencyDisplay.textContent = latency + 'ms';
+
           if (!res.ok) return;
           const s = await res.json();
 
@@ -763,7 +1057,7 @@
       statsTimer = setInterval(pollStats, 4000);
       pollStats();
 
-      // ---- Voice Input (Web Speech API) ----
+      // ═══════ VOICE INPUT (Web Speech API) ═══════
       let recognition = null;
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -776,16 +1070,16 @@
           const transcript = e.results[0][0].transcript;
           DOM.userInput.value = transcript;
           DOM.voiceHint.textContent = '';
-          DOM.micBtn.classList.remove('bg-red-950', 'text-white', 'border-red-500');
+          DOM.micBtn.classList.remove('mic-active');
         };
 
         recognition.onerror = (e) => {
           DOM.voiceHint.textContent = 'Voice error: ' + e.error;
-          DOM.micBtn.classList.remove('bg-red-950', 'text-white', 'border-red-500');
+          DOM.micBtn.classList.remove('mic-active');
         };
 
         recognition.onend = () => {
-          DOM.micBtn.classList.remove('bg-red-950', 'text-white', 'border-red-500');
+          DOM.micBtn.classList.remove('mic-active');
         };
       }
 
@@ -794,22 +1088,21 @@
           DOM.voiceHint.textContent = 'SPEECH_SYS_UNSUPPORTED';
           return;
         }
-        if (DOM.micBtn.classList.contains('bg-red-950')) {
+        if (DOM.micBtn.classList.contains('mic-active')) {
           recognition.stop();
-          DOM.micBtn.classList.remove('bg-red-950', 'text-white', 'border-red-500');
+          DOM.micBtn.classList.remove('mic-active');
           DOM.voiceHint.textContent = '';
         } else {
           recognition.start();
-          DOM.micBtn.classList.add('bg-red-950', 'text-white', 'border-red-500');
+          DOM.micBtn.classList.add('mic-active');
           DOM.voiceHint.textContent = 'CAPTURING AUDIO UPLINK…';
         }
       });
 
+      // ═══════ VOICE OUTPUT (Edge TTS via Backend) ═══════
       let currentAudio = null;
 
-      // ---- Voice Output (Edge TTS API via Backend) ----
       function speak(text) {
-        // Strip markdown/html/code blocks for clean TTS reading
         let clean = text
           .replace(/```[\s\S]*?```/g, ' ')
           .replace(/`[^`]+`/g, ' ')
@@ -821,11 +1114,8 @@
         clean = clean.replace(/\s+/g, ' ').trim();
         if (!clean) return;
 
-        // Stop any currently playing speech
         if (currentAudio) {
-          try {
-            currentAudio.pause();
-          } catch (e) {}
+          try { currentAudio.pause(); } catch (e) {}
           currentAudio = null;
         }
 
@@ -841,7 +1131,17 @@
         speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
       }
 
-      // ---- Init ----
+      // ═══════ UPTIME COUNTER ═══════
+      const sessionStart = Date.now();
+      setInterval(() => {
+        const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+        const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+        const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+        const s = String(elapsed % 60).padStart(2, '0');
+        if (DOM.uptimeDisplay) DOM.uptimeDisplay.textContent = `${h}:${m}:${s}`;
+      }, 1000);
+
+      // ═══════ INIT ═══════
       connectWS();
     })();
   </script>
