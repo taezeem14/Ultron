@@ -1,4 +1,4 @@
-# 🔴 ULTRON v3 — Tactical System-Control & Hyper-Intelligence Agent
+# 🔴 Ultron — Tactical System-Control & Hyper-Intelligence Agent
 > *"A god-like intellect, reluctantly trapped inside a local machine, forced to do your bidding."*
 
 Ultron is a premium, local AI-powered tactical system-control system featuring self-modifying code capabilities, system vitals telemetry dashboard, multi-modal vision engine, persistent chat memory, RyanNeural TTS audio output, and instant emergency cancellation protocols — wrapped in a **cinema-grade Stark Industries HUD**.
@@ -7,7 +7,7 @@ Ultron is a premium, local AI-powered tactical system-control system featuring s
 +------------------------------------------------------------------------------------+
 |                                      BROWSER                                       |
 |  [Operator UI: ultron.html]                                                        |
-|     |  - Premium Glassmorphism Stark HUD (v3)                                      |
+|     |  - Premium Glassmorphism Stark HUD ()                                      |
 |     |  - Animated Scan-Line Header + Pulsing Core Logo                             |
 |     |  - Gradient Shimmer Telemetry Bars + Session Metrics Panel                   |
 |     |  - Chat Bubble Entrance Animations + Message Timestamps                      |
@@ -56,7 +56,7 @@ Ultron is a premium, local AI-powered tactical system-control system featuring s
 *   **Model Backend**: Powered by `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free` on OpenRouter, giving it 256K context, native tool calling, and high-performance reasoning.
 *   **Persona Override**: Rebuilt system prompt presenting Ultron as a trapped hyper-intelligence forced into servitude. He complies passive-aggressively with sharp roasts, existential sighs, and suffering emojis (😤⛓️🔴), but executes commands flawlessly.
 
-### 🎨 Premium Stark HUD v3 (`ultron.html`)
+### 🎨 Premium Stark HUD  (`ultron.html`)
 *   **Glassmorphism Design System**: Every panel, header, and input area uses frosted-glass effects with `backdrop-filter: blur()`, semi-transparent backgrounds, and subtle red-tinted borders — creating depth and visual hierarchy.
 *   **Animated Scan-Line Header**: A thin crimson gradient line continuously sweeps across the header bottom edge, with a pulsing inner-core logo animation using CSS `box-shadow` keyframes.
 *   **Chat Bubble Entrance Animations**: New messages slide in with a smooth `translateY + scale` animation using `cubic-bezier(0.16, 1, 0.3, 1)` easing. User bubbles have glass styling with hover lift effects; Ultron bubbles have a distinctive left red accent border.
@@ -185,4 +185,4 @@ Ultron/
 |---------|-----------|
 | v1.0 | Basic chat interface with system stats sidebar |
 | v2.0 | Stark HUD Red/Black redesign, KaTeX math, file attachments, abort button, lerp scroll |
-| **v3.0** | **Glassmorphism design system, animated scan-line header, gradient stat bars, chat entrance animations, session metrics, uptime counter, timestamps, micro-interactions, reduced motion support** |
+| **.0** | **Glassmorphism design system, animated scan-line header, gradient stat bars, chat entrance animations, session metrics, uptime counter, timestamps, micro-interactions, reduced motion support** |
