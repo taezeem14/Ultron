@@ -139,7 +139,7 @@ async def api_tts(text: str):
 
     try:
         import edge_tts
-        communicate = edge_tts.Communicate(clean_text, "en-US-RyanNeural")
+        communicate = edge_tts.Communicate(clean_text, "en-GB-RyanNeural")
         audio_data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":

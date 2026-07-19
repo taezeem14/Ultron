@@ -1019,10 +1019,10 @@
         }
       });
 
-      // ═══════ VOICE OUTPUT (Browser SpeechSynthesis) ═══════
-      function speak(text) {
-        if (!('speechSynthesis' in window)) return;
+      // ═══════ VOICE OUTPUT (Edge TTS via Backend) ═══════
+      let currentAudio = null;
 
+      function speak(text) {
         let clean = text
           .replace(/```[\s\S]*?```/g, ' ')
           .replace(/`[^`]+`/g, ' ')
@@ -1034,29 +1034,16 @@
         clean = clean.replace(/\s+/g, ' ').trim();
         if (!clean) return;
 
-        // Cancel any ongoing speech
-        speechSynthesis.cancel();
+        if (currentAudio) {
+          try { currentAudio.pause(); } catch (e) {}
+          currentAudio = null;
+        }
 
-        const utterance = new SpeechSynthesisUtterance(clean);
-        utterance.rate = 1.05;
-        utterance.pitch = 0.85;
-        utterance.volume = 1;
-
-        // Try to pick a deep male voice
-        const voices = speechSynthesis.getVoices();
-        const preferred = voices.find(v =>
-          /david|mark|james|guy|daniel/i.test(v.name) && /en/i.test(v.lang)
-        ) || voices.find(v => /en-US/i.test(v.lang) && /male/i.test(v.name))
-          || voices.find(v => /en/i.test(v.lang));
-
-        if (preferred) utterance.voice = preferred;
-        speechSynthesis.speak(utterance);
-      }
-
-      // Preload voices
-      if ('speechSynthesis' in window) {
-        speechSynthesis.getVoices();
-        speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+        const url = `${API_BASE}/api/tts?text=${encodeURIComponent(clean)}`;
+        currentAudio = new Audio(url);
+        currentAudio.play().catch(err => {
+          console.warn('Audio playback failed or was interrupted:', err);
+        });
       }
 
       // ═══════ UPTIME COUNTER ═══════
