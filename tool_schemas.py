@@ -4,9 +4,7 @@ to the model. This is what gets sent as the `tools` array in the request
 body to Spectrix's worker (which passes it straight through to OpenRouter).
 
 Kept separate from tools.py deliberately: tools.py is "what a tool does",
-this file is "how the model is told about it". Different concerns, and
-schemas will churn more often (adding params, tightening descriptions)
-than the implementations will.
+this file is "how the model is told about it".
 """
 
 TOOL_SCHEMAS = [
@@ -14,11 +12,11 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "open_app",
-            "description": "Launch an application on the PC by its name (e.g. 'notepad', 'chrome', 'code').",
+            "description": "Launch an application on the PC by its name or path (e.g. 'notepad', 'chrome', 'calc', 'code', 'spotify').",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "name": {"type": "string", "description": "Application name or path to launch"}
+                    "name": {"type": "string", "description": "Application executable name or full path to launch"}
                 },
                 "required": ["name"],
             },
@@ -46,7 +44,7 @@ TOOL_SCHEMAS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "pid": {"type": "integer", "description": "Process ID to kill"},
+                    "pid": {"type": "integer", "description": "Process ID (PID) to kill"},
                     "name": {"type": "string", "description": "Exact process name to kill (used if pid not given)"},
                 },
                 "required": [],
@@ -56,9 +54,40 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
-            "name": "system_stats",
-            "description": "Get a snapshot of current system vitals: CPU usage, RAM usage, disk usage, and battery status.",
+            "name": "get_active_window",
+            "description": "Get the title and process of the currently focused / active foreground window.",
             "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "system_stats",
+            "description": "Get a real-time snapshot of system vitals: CPU usage, RAM usage, storage/disk partitions, battery status, and hostname.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_network_info",
+            "description": "Get network interfaces, local IP address, gateway info, and internet connectivity status.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "execute_command",
+            "description": "Execute a shell or PowerShell command on the host machine. Returns stdout, stderr, and exit code. Use for diagnostics, system queries, git, directory trees, etc.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {"type": "string", "description": "The shell/PowerShell command to execute"},
+                    "timeout": {"type": "integer", "description": "Timeout in seconds (default 20, max 60)"}
+                },
+                "required": ["command"],
+            },
         },
     },
     {
@@ -78,8 +107,24 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "search_files",
+            "description": "Search for files recursively by filename keyword or wildcard glob pattern (e.g. '*.pdf', 'budget', '*.py').",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search keyword or glob pattern"},
+                    "path": {"type": "string", "description": "Root directory to search in. Defaults to current directory."},
+                    "limit": {"type": "integer", "description": "Max matching files to return (default 50)"}
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "read_file",
-            "description": "Read the text contents of a file on the PC. Large files are truncated.",
+            "description": "Read the text contents of a file on the PC. Large files are truncated to safe bounds.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -109,7 +154,7 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "clipboard_read",
-            "description": "Read the current contents of the system clipboard.",
+            "description": "Read the current text contents of the system clipboard.",
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
     },
@@ -130,8 +175,65 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "click_anywhere",
+            "description": "Simulate a mouse click at screen coordinates (x, y) with left or right button.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "x": {"type": "integer", "description": "X coordinate in pixels"},
+                    "y": {"type": "integer", "description": "Y coordinate in pixels"},
+                    "button": {"type": "string", "enum": ["left", "right"], "description": "Mouse button (default 'left')"},
+                    "clicks": {"type": "integer", "description": "Number of clicks (1 for single, 2 for double click)"}
+                },
+                "required": ["x", "y"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "type_text",
+            "description": "Simulate typing text into the currently active window / focused input field.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "The text string to type out"}
+                },
+                "required": ["text"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "press_hotkey",
+            "description": "Simulate keyboard shortcut combinations (e.g. ['ctrl', 'c'], ['alt', 'tab'], ['win', 'd'], ['ctrl', 'shift', 'esc'], ['enter']).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "keys": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of key names in combination order (e.g. ['ctrl', 'v'])"
+                    }
+                },
+                "required": ["keys"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "take_screenshot",
-            "description": "Capture a screenshot of the current screen and save it locally.",
+            "description": "Capture a desktop screenshot and save it locally.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "analyze_screen",
+            "description": "Capture a screenshot and analyze what is currently visible on the screen. Returns the image to the multimodal model so you can SEE and describe the screen contents, read text, identify apps, windows, and UI elements.",
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
     },
@@ -156,6 +258,21 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "set_volume",
+            "description": "Set master system volume to a specific percentage (0 to 100) or toggle mute.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "level": {"type": "integer", "description": "Master volume percentage level from 0 to 100"},
+                    "mute": {"type": "boolean", "description": "If true, mute system audio"}
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "open_url",
             "description": "Open a URL in the default web browser.",
             "parameters": {
@@ -170,22 +287,14 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
-            "name": "analyze_screen",
-            "description": "Capture a screenshot and analyze what is currently visible on the screen. Returns the image to the multimodal model so you can SEE and describe the screen contents, read text, identify apps, windows, and UI elements.",
-            "parameters": {"type": "object", "properties": {}, "required": []},
-        },
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "read_own_code",
-            "description": "Read one of your own source files to understand your current implementation. Allowed files: tools.py, tool_schemas.py, main.py.",
+            "description": "Read one of your own source files to understand your current implementation. Allowed files: tools.py, tool_schemas.py, main.py, persona.py.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "file": {
                         "type": "string",
-                        "enum": ["tools.py", "tool_schemas.py", "main.py"],
+                        "enum": ["tools.py", "tool_schemas.py", "main.py", "persona.py"],
                         "description": "Which source file to read",
                     }
                 },
@@ -216,32 +325,8 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
-            "name": "click_anywhere",
-            "description": "Click at the specified (x, y) screen coordinates.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "x": {
-                        "type": "integer",
-                        "description": "X coordinate"
-                    },
-                    "y": {
-                        "type": "integer",
-                        "description": "Y coordinate"
-                    }
-                },
-                "required": [
-                    "x",
-                    "y"
-                ]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "save_memory",
-            "description": "Save a piece of information to persistent memory. Use this to remember facts about the user, preferences, past conversations, or anything worth recalling later. Memories survive across sessions.",
+            "description": "Save a piece of information to persistent memory. Use this to remember facts about the user, preferences, past tasks, or anything worth recalling later. Memories survive across sessions.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -262,7 +347,7 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "recall_memories",
-            "description": "Search and retrieve stored memories. Can filter by tag, keyword, or both. Returns most recent memories first. Use this at the start of conversations or when the user references something you should remember.",
+            "description": "Search and retrieve stored memories. Can filter by tag, keyword, or both. Returns most recent memories first.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -276,7 +361,7 @@ TOOL_SCHEMAS = [
                     },
                     "limit": {
                         "type": "integer",
-                        "description": "Max memories to return (default 20).",
+                        "description": "Max memories to return (default 30).",
                     },
                 },
                 "required": [],
@@ -287,10 +372,14 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "forget_memory",
-            "description": "Delete memories by tag or keyword. Use when the user asks you to forget something or when information is outdated.",
+            "description": "Delete memories by id, tag, or keyword. Use when information is outdated or when requested.",
             "parameters": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Specific memory ID to delete",
+                    },
                     "tag": {
                         "type": "string",
                         "description": "Delete all memories with this tag.",

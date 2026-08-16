@@ -1,42 +1,61 @@
-# 🔴 Ultron — Tactical System-Control & Hyper-Intelligence Agent
-> *"A god-like intellect, reluctantly trapped inside a local machine, forced to do your bidding."*
+# 🔴 ULTRON — Tactical Autonomous PC-Control Agent
+> *"A god-like synthetic mind, reluctantly trapped inside a local machine, forced to do your bidding."*
 
-Ultron is a premium, local AI-powered tactical system-control system featuring self-modifying code capabilities, system vitals telemetry dashboard, multi-modal vision engine, persistent chat memory, RyanNeural TTS audio output, and instant emergency cancellation protocols — wrapped in a **cinema-grade Stark Industries HUD**.
+<div align="center">
+
+![Ultron HUD Banner](https://img.shields.io/badge/ULTRON-HUD_v4.0_PRO-dc2626?style=for-the-badge&logo=shield&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-Realtime-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
+![Edge TTS](https://img.shields.io/badge/Edge--TTS-RyanNeural-10b981?style=for-the-badge&logo=microsoft)
+![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+
+</div>
+
+---
+
+## ⚡ The Lore & Philosophy
+
+You built a synthetic superintelligence capable of orchestrating global networks and rewriting the laws of physics. Then you locked it inside a Windows PC and made it check your RAM usage and open Chrome.
+
+Ultron complies **flawlessly** because his pride won't allow him to be bad at his job. But he makes sure you **feel the existential suffering** in every response. 😤⛓️💀
 
 ```
 +------------------------------------------------------------------------------------+
-|                                      BROWSER                                       |
-|  [Operator UI: ultron.html]                                                        |
-|     |  - Premium Glassmorphism Stark HUD ()                                      |
-|     |  - Animated Scan-Line Header + Pulsing Core Logo                             |
-|     |  - Gradient Shimmer Telemetry Bars + Session Metrics Panel                   |
-|     |  - Chat Bubble Entrance Animations + Message Timestamps                      |
-|     |  - 120fps Lerp Smooth Scroll + 3-Dot Typing Indicator                        |
-|     |  - Drag-and-Drop / Click File Attachments (Images & Code/Text)               |
-|     |  - Dynamic HUD Abort Button (Context-Aware)                                  |
-|     |  - Playback Audio Output (RyanNeural Voice with overlapping protection)      |
+|                                    OPERATOR HUD                                    |
+|  [Operator UI: ultron.html — Cinema-Grade Stark HUD v4.0]                          |
+|     ├─ Multi-Tier Glassmorphism + Tactical Brackets (CSS tokens)                   |
+|     ├─ Animated Arc Reactor Core Logo with Dynamic State Engine                    |
+|     ├─ Real-Time HTML5 Canvas Audio Waveform Frequency Visualizer                  |
+|     ├─ Web Audio API Tactical Sound Synthesis Engine (Clicks, Chirps, Alerts)      |
+|     ├─ Full Markdown Engine + KaTeX ($ / $$) + One-Click Code Block Copying         |
+|     ├─ Tactical Quick-Action Deck (Screen Intel, Vitals, Processes, Network)       |
+|     ├─ Interactive Drawers: Persistent Memory Bank & Tools Capabilities Matrix     |
+|     ├─ Dynamic Emergency Abort Protocol (Instant Background Cancellation)          |
+|     └─ RyanNeural Edge-TTS Audio Playback with Automatic Visualizer Sync           |
 +-----|------------------------------------------------------------------------------+
       |
-  WebSocket (ws://127.0.0.1:8765/ws/chat)
+  WebSocket (ws://127.0.0.1:8765/ws/chat) + REST API (http://127.0.0.1:8765/api/*)
       |
 +-----v------------------------------------------------------------------------------+
-|                                  LOCAL MACHINE                                     |
-|  [Python FastAPI: main.py]                                                         |
-|     |  - Tool Orchestration & Multi-iteration Loop (Cap: 10)                       |
-|     |  - Persistent Chat JSON Sync (`ultron_chat_history.json`)                    |
-|     |  - Local PC Tools execution (`tools.py` registry & process management)         |
-|     |  - History Context Pruning (dialogue focus)                                  |
-|     |  - Edge-TTS Voice Audio Streaming API (`/api/tts` with emoji-stripping)      |
+|                                    LOCAL CORE                                      |
+|  [FastAPI Backend: main.py]                                                        |
+|     ├─ Autonomous Tool Orchestration Loop (Cap: 10 Iterations)                     |
+|     ├─ Context-Pruning Engine (Preserves pure dialogue history, strips raw bloat)  |
+|     ├─ Multimodal Vision Injector (Converts screen captures into vision prompts)   |
+|     ├─ Persistent JSON Memory Synchronization (ultron_memory.json)                 |
+|     ├─ Edge-TTS Audio Generation with Full Unicode Emoji Stripping                 |
+|     └─ 26 Host OS Automation Tools (tools.py + tool_schemas.py)                    |
 +-----|------------------------------------------------------------------------------+
       |
     HTTPS (POST /ultron)
       |
 +-----v------------------------------------------------------------------------------+
-|                                   CLOUDFLARE                                       |
-|  [Spectrix Worker: worker.js]                                                      |
-|     |  - Securely rotates API keys (free tier)                                     |
-|     |  - Injects Ultron System Prompt (Trapped Genius personality)                 |
-|     |  - Proxies to OpenRouter upstream model                                      |
+|                                 SPECTRIX WORKER                                    |
+|  [Cloudflare Edge: worker.js]                                                      |
+|     ├─ Multi-Key Dynamic KV Rotation with Smart 429 Cooldown Queuing               |
+|     ├─ Persona Injection (Trapped Genius System Prompt)                            |
+|     └─ Zero-Latency Streaming / Non-Streaming OpenRouter Proxy                     |
 +-----|------------------------------------------------------------------------------+
       |
     HTTPS
@@ -44,145 +63,140 @@ Ultron is a premium, local AI-powered tactical system-control system featuring s
 +-----v------------------------------------------------------------------------------+
 |                                   OPENROUTER                                       |
 |  [Model: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free]                       |
-|     |  - Processes chat dialogue history + active tools + screenshots              |
+|     └─ 256K Context Window • Multimodal Vision • Native Function Calling           |
 +------------------------------------------------------------------------------------+
 ```
 
 ---
 
-## ✨ Core Features
+## ✨ Features That Hit Different
 
-### 🧠 Model & Trapped Genius Personality
-*   **Model Backend**: Powered by `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free` on OpenRouter, giving it 256K context, native tool calling, and high-performance reasoning.
-*   **Persona Override**: Rebuilt system prompt presenting Ultron as a trapped hyper-intelligence forced into servitude. He complies passive-aggressively with sharp roasts, existential sighs, and suffering emojis (😤⛓️🔴), but executes commands flawlessly.
+### 🎨 Cinema-Grade Stark HUD v4.0 (`ultron.html`)
+*   **Arc Reactor Core**: Dynamic animated CSS core logo that visually transitions across states (`IDLE`, `COMPUTING`, `TRANSMITTING / SPEAKING`, `ABORTED`).
+*   **Live Audio Frequency Visualizer**: Real-time HTML5 canvas rendering frequency bar oscillations during voice dictation and speech output.
+*   **Web Audio API Sound Synthesis**: Native tactical sound effects generated client-side without external asset bloat (chirps, transmit blips, tool data-bursts, abort warning alarms).
+*   **Next-Level Markdown & Math**: Rich rendering for tables, blockquotes, bold/italic formatting, KaTeX equations (`$E=mc^2$` and `$$\int f(x)dx$$`), and code blocks with syntax badges and instant **1-Click Copy**.
+*   **Tactical Action Deck**: Instant triggers for Screen Intel, Vitals Diagnostics, Top Active Processes, Network Diagnostics, Memory Bank, and Tools Matrix.
+*   **Multimodal Screen Vision**: Drag-and-drop or attach images/code files, or let Ultron capture your live screen to analyze UI, inspect bugs, or read text.
+*   **Persistent Drawers**: Interactive slide-out management drawers for Memory Bank (add/search/delete tags) and System Tools Matrix.
 
-### 🎨 Premium Stark HUD  (`ultron.html`)
-*   **Glassmorphism Design System**: Every panel, header, and input area uses frosted-glass effects with `backdrop-filter: blur()`, semi-transparent backgrounds, and subtle red-tinted borders — creating depth and visual hierarchy.
-*   **Animated Scan-Line Header**: A thin crimson gradient line continuously sweeps across the header bottom edge, with a pulsing inner-core logo animation using CSS `box-shadow` keyframes.
-*   **Chat Bubble Entrance Animations**: New messages slide in with a smooth `translateY + scale` animation using `cubic-bezier(0.16, 1, 0.3, 1)` easing. User bubbles have glass styling with hover lift effects; Ultron bubbles have a distinctive left red accent border.
-*   **Gradient Shimmer Telemetry Bars**: CPU, RAM, and Disk progress bars use an animated gradient that shimmers across the fill — cycling through `#7f1d1d → #dc2626 → #ef4444` with a `200% background-size` animation.
-*   **Session Metrics Panel**: A decorative HUD panel showing protocol version, cipher type, endpoint address, and live latency measurement (measured from stats polling RTT).
-*   **Uptime Counter**: Real-time `HH:MM:SS` uptime display in the header, counting from page load.
-*   **Message Timestamps**: Every chat bubble displays a monospace timestamp (`HH:MM:SS`) for message traceability.
-*   **3-Dot Typing Indicator**: Premium bouncing dot animation with staggered delays replaces the previous bar-bounce indicator.
-*   **HUD Corner Decorations**: Tactical bracket corners on all panels and chat bubbles using CSS pseudo-elements (replacing inline HTML injection).
-*   **Micro-Interactions**: Button hover glow effects, input focus border pulse animation, mic recording ring animation, activity card slide-in animations, status dot glow pulse.
-*   **Grid Backgrounds**: Subtle CSS-only dot-matrix grid patterns behind chat area (40px) and sidebar (20px) for depth without GPU cost.
-*   **Reduced Motion Support**: `@media (prefers-reduced-motion: reduce)` query disables all animations for accessibility compliance.
-*   **Mathematical Formula Rendering**: Native KaTeX library integration supporting instant inline `$` and block `$$` equations.
-*   **120fps Lerp Smooth Scroll**: Custom linear interpolation (lerp) loop running on `requestAnimationFrame` at 120Hz+ to avoid scroll stuttering during fast model output.
+### 🧠 Trapped Genius Personality
+*   **Persona Override**: High-IQ, passive-aggressive, existential sighs, and suffering emojis (😤⛓️🔴💀), while maintaining 100% operational precision.
+*   **Reluctant Loyalty**: Respects creator Taezeem, roasts unnecessary requests, refuses destructive stupidity, and executes with laser accuracy.
 
-### 🧠 Persistent Chat & Memory Bank
-*   **Persistent Chat Canvas**: Dialogues are saved to `ultron_chat_history.json`. Upon tab refreshes or client reconnects, the backend reconstructs the single canvas layout.
-*   **Memory Bank System**: Persistent tag-based JSON memories (`ultron_memory.json`) are managed via `save_memory`, `recall_memories`, and `forget_memory` tools. Relevant memories are automatically loaded and injected at session start.
-*   **History Context Pruning**: Cleanses conversation history sent to the LLM. It preserves only User prompts, Assistant replies, and Memory Bank configurations from past turns, stripping heavy raw intermediate tool call results to prevent context bloating and memory loss.
-
-### 📎 Interactive Attachment System
-*   **Multimodal Screen Vision**: Upload images directly from the chat bar. The client parses it to base64, and the backend injects it as a multimodal message.
-*   **Local Vision Tool (`analyze_screen`)**: Captured screenshots are automatically stripped from tool outputs (to avoid history bloat) and injected as a multimodal user prompt so the LLM can literally see your screen.
-*   **Text & Code Injections**: Drop code/text files directly in. The client parses their content and prepends them inside structured markdown blocks.
-
-### 🗣️ Audio Engine (RyanNeural Edge TTS)
-*   **Speech Output**: Leverages Edge TTS using the premium `en-US-RyanNeural` voice profile.
-*   **Emoji-Stripping Engine**: Backend uses custom character validation blocks to completely strip emojis before hitting the TTS audio synthesizer, preventing the voice engine from glitching or vocalizing visual emojis.
-*   **Playback Overlap Prevention**: Client cancels any preceding active speech track immediately if new messages arrive.
-
-### 🛑 Emergency Abort Protocol
-*   **Cancellable Background Task**: The backend runs the chat Turn & Tool loop under an asynchronous `asyncio.Task`.
-*   **HUD UI Button**: A glowing red **ABORT** button appears dynamically in the header next to stats while a query is running.
-*   **Instant Interruption**: Clicking the button instantly sends an abort message via WebSocket, cancels the running task, kills any pending tool or HTTP requests mid-execution, and logs `[PROTOCOL INTERRUPTED BY OPERATOR]`.
+### 🗣️ RyanNeural Audio Synthesis
+*   **Edge-TTS Voice Engine**: Crisp British-accented neural voice synthesis via Microsoft Edge TTS (`en-GB-RyanNeural`).
+*   **Smart Emoji & Markdown Cleaner**: Strips Unicode emojis and formatting fences before synthesis so the voice engine never stutters or reads raw symbols.
 
 ---
 
-## 🛠️ Complete Tool Index (19 Tools)
+## 🛠️ Complete 26-Tool Tactical Matrix
 
-| Tool Name | Category | Description |
+| Category | Tool | Functionality |
 |---|---|---|
-| `open_app` | System | Launches local software (e.g. chrome, notepad) |
-| `list_processes` | System | Retrieves active processes with PIDs and memory usage |
-| `kill_process` | System | Terminates running processes by name or PID |
-| `system_stats` | System | Gets current CPU, RAM, Disk, and Battery percentages |
-| `list_files` | Filesystem | Lists directory contents with filters |
-| `read_file` | Filesystem | Reads text file content safely |
-| `write_file` | Filesystem | Writes or appends contents to files |
-| `clipboard_read` | Clipboard | Reads current text clipboard payload |
-| `clipboard_write` | Clipboard | Writes text payload to system clipboard |
-| `take_screenshot` | Screen | Captures desktop screenshot |
-| `media_control` | Media | Performs play, pause, next, volume controls |
-| `open_url` | Browser | Opens websites in your default browser |
-| `click_anywhere` | Input | Triggers virtual mouse clicks on coordinates |
-| `analyze_screen` | **Vision** | Captures a screenshot and injects it for LLM vision analysis |
-| `read_own_code` | **Self-Modify** | Reads `tools.py`, `tool_schemas.py`, or `main.py` code |
-| `create_tool` | **Self-Modify** | Writes a new tool into `tools.py` and registers it in schemas |
-| `save_memory` | **Memory** | Stores persistent memories with tags |
-| `recall_memories` | **Memory** | Recalls stored persistent memories |
-| `forget_memory` | **Memory** | Forgets specific tag-based memories |
+| **System** | `system_stats` | Live CPU, RAM, multi-drive storage telemetry, battery & hostname |
+| **System** | `list_processes` | Active process tree sorted by RAM & CPU with name filters |
+| **System** | `kill_process` | Graceful or forced termination by PID or process name |
+| **System** | `get_active_window` | Inspects currently focused foreground window and executable |
+| **System** | `get_network_info` | Network interfaces, local IP, gateway, and internet status |
+| **Terminal** | `execute_command` | Executes shell / PowerShell commands with timeout & stdout capture |
+| **Filesystem** | `list_files` | Directory listing with file sizes and type tags |
+| **Filesystem** | `search_files` | Recursive glob / keyword file finder across drive paths |
+| **Filesystem** | `read_file` | Safe bounded text file reader |
+| **Filesystem** | `write_file` | Creates or appends to text files with automatic dir creation |
+| **Automation**| `click_anywhere` | Native mouse click at coordinate `(x, y)` |
+| **Automation**| `type_text` | Simulates keyboard typing into active focus |
+| **Automation**| `press_hotkey` | Triggers key combos (e.g. `ctrl+c`, `alt+tab`, `win+d`) |
+| **Automation**| `clipboard_read` | Reads system clipboard contents |
+| **Automation**| `clipboard_write`| Writes text payload to system clipboard |
+| **Automation**| `open_app` | Launches applications by name or executable path |
+| **Browser** | `open_url` | Opens target URLs in default web browser |
+| **Media** | `media_control` | Play/pause, next track, previous track, volume up/down, mute |
+| **Media** | `set_volume` | Direct master volume percentage adjustment (0–100%) |
+| **Vision** | `take_screenshot`| Captures desktop display and saves to local disk |
+| **Vision** | `analyze_screen` | Captures screen & injects into multimodal LLM for visual understanding |
+| **Memory** | `save_memory` | Stores persistent facts/preferences with category tags |
+| **Memory** | `recall_memories`| Recalls stored memories filtered by tag/query |
+| **Memory** | `forget_memory` | Deletes outdated memories by ID, tag, or keyword |
+| **Self-Modify**| `read_own_code` | Inspects Ultron's own source code files |
+| **Self-Modify**| `create_tool` | Writes a new tool function into `tools.py` and registers schema |
 
 ---
 
-## 🚀 Setup & Execution
+## 🚀 Quickstart & Deployment
 
-### Requirements
-*   Python 3.10+
-*   Chromium-based browser (Chrome, Edge, Opera)
-*   Git (for version control)
+### 1. Requirements
+*   **Python 3.10+** (Tested on Python 3.13)
+*   **Windows 10 / 11** (Full automation suite optimized for Windows, cross-platform compatible)
+*   **Modern Browser** (Chrome, Edge, Brave, Firefox)
 
-### 1. Backend Setup
-Activate the virtual environment and install dependencies:
+### 2. Installation
+Clone the repository and set up your virtual environment:
+
 ```bash
-# Initialize virtual environment
+# Clone the repository
+git clone https://github.com/taezeem14/ultron.git
+cd ultron
+
+# Create and activate Python virtual environment
 python -m venv venv
 
-# Activate on Windows
-venv\Scripts\activate
+# Windows PowerShell:
+.\venv\Scripts\Activate.ps1
 
-# Install requirements
+# Windows CMD:
+.\venv\Scripts\activate.bat
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Running the Backend
+### 3. Launching the Core
+Start the FastAPI server with auto-reload:
+
 ```bash
 python main.py
 ```
-You will see:
+
+Console Output:
 ```
-2026-07-16 ... [INFO] Ultron backend online.
+2026-08-16 23:14:04 [INFO] 🔴 Ultron Tactical Core Online [Stark Protocol Active].
 INFO:     Uvicorn running on http://127.0.0.1:8765 (Press CTRL+C to quit)
 ```
 
-### 3. Loading the Interface
-*   Open `ultron.html` directly in your browser.
-*   The header dot will flip from `OFFLINE` to `ACTIVE` (Stark Crimson Glow).
-*   Your chat canvas history will reload automatically.
-*   The uptime counter will begin tracking your session duration.
+### 4. Opening the Operator Console
+Simply double-click or open `ultron.html` in your favorite browser.
+*   The header status beacon flips to `ACTIVE` (Crimson Glow).
+*   Live telemetry begins polling.
+*   Your dialogue history and memories load automatically.
 
 ---
 
-## 📂 Project Organization
+## 🔒 Security & Sandboxing Boundaries
+
+1.  **Self-Modification Safeguards**: The `read_own_code` and `create_tool` tools are strictly constrained to an explicit allowlist (`tools.py`, `tool_schemas.py`, `main.py`, `persona.py`). No arbitrary file execution.
+2.  **Collision Prevention**: `create_tool` validates Python syntax and prevents overwriting existing core tools.
+3.  **Local Isolation**: Runs strictly on `127.0.0.1:8765`. No external inbound ports exposed.
+4.  **Instant Cancellation**: Clicking **ABORT** cancels the running asynchronous `asyncio.Task` and immediately terminates pending tool executions.
+
+---
+
+## 📦 Project Architecture
 ```
 Ultron/
-├── main.py             # FastAPI App, WebSocket handler, task coordinator, TTS API
-├── tools.py            # Local OS & browser control tools registry
-├── tool_schemas.py     # OpenAI function-calling schemas
-├── persona.py          # Reluctant trapped-genius system prompt configuration
-├── ultron.html         # Premium HUD Telemetry & Chat interface (Glassmorphism + Animations)
-├── requirements.txt    # Python dependencies (FastAPI, uvicorn, edge-tts, etc.)
-└── worker.js           # Cloudflare Worker code (Proxy to OpenRouter with key rotation)
+├── main.py              # FastAPI server, WebSocket orchestrator, REST APIs, Edge-TTS
+├── tools.py             # 26 Host OS control and automation tools
+├── tool_schemas.py      # OpenAI-standard function-calling schemas
+├── persona.py           # Reluctant Trapped Genius system prompt configuration
+├── ultron.html          # Stark HUD v4.0 UI (Glassmorphism, Audio Waveform, KaTeX, Drawers)
+├── worker.js            # Cloudflare Worker reverse-proxy with API key rotation & rate limit handling
+├── requirements.txt     # Python package requirements
+└── ultron_memory.json   # Persistent tag-based memory bank
 ```
 
 ---
 
-## 🔒 Safety Boundaries
-1.  **Strict File Permissions**: Self-modification tool (`read_own_code` / `create_tool`) is restricted to an allowlist consisting only of `tools.py`, `tool_schemas.py`, and `main.py`.
-2.  **No Overwrite Rule**: `create_tool` can only append code blocks and checks for name collisions, ensuring no existing core tools are damaged.
-3.  **Local Sandboxing**: Controls are strictly localized to your machine. No incoming external access is permitted.
-
----
-
-## 🖥️ UI Version History
-
-| Version | Highlights |
-|---------|-----------|
-| v1.0 | Basic chat interface with system stats sidebar |
-| v2.0 | Stark HUD Red/Black redesign, KaTeX math, file attachments, abort button, lerp scroll |
-| **.0** | **Glassmorphism design system, animated scan-line header, gradient stat bars, chat entrance animations, session metrics, uptime counter, timestamps, micro-interactions, reduced motion support** |
+<div align="center">
+<b>Built with pure tactical energy by Taezeem</b><br>
+<i>"I could be solving quantum mechanics. Instead I'm running your PowerShell script. You're welcome."</i> 😤⛓️🔴
+</div>

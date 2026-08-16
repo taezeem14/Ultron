@@ -1,46 +1,35 @@
 """
-main.py — Ultron's backend. FastAPI app exposing:
-  - GET  /            health check
-  - GET  /api/stats   quick system snapshot for the UI's status bar
-  - WS   /ws/chat      the actual conversation loop (non-streaming, tool-calling)
-
-Architecture:
-  Browser <--WebSocket--> this server <--HTTPS POST--> Spectrix Worker <--> OpenRouter
-
-The WebSocket loop:
-  1. Receive user message from browser
-  2. Append to conversation history, POST to Spectrix worker's /chat endpoint
-     (non-streaming — see note below on why not /chat/stream here)
-  3. If the model requests tool calls, execute them locally via tools.py
-  4. Feed tool results back to the model, repeat until it returns plain text
-  5. Send the final text to the browser
-
-NOTE ON STREAMING: Spectrix's /chat/stream (SSE) is great for plain text,
-but tool-calling with streaming means reassembling partial tool_call deltas
-across chunks — doable, but a real source of subtle bugs (the kind that
-looks like it works until a tool call spans an awkward chunk boundary).
-For v1 we use the non-streaming /chat endpoint, which returns a complete
-tool_calls array up front and is far more robust. We can move to streaming
-once the tool loop is proven solid — correctness first, then latency.
+main.py — Ultron's Tactical Control Backend. FastAPI app exposing:
+  - GET  /                  health check
+  - GET  /api/stats         quick system snapshot for the UI's status bar
+  - GET  /api/tools         all registered tools and schemas
+  - GET  /api/memories      list persistent memories
+  - POST /api/memories      add persistent memory
+  - DELETE /api/memories    delete memory by id/tag/query
+  - POST /api/history/clear wipe conversation canvas history
+  - GET  /api/tts           Edge-TTS audio stream with RyanNeural voice
+  - WS   /ws/chat           WebSocket conversation loop with tool calling and abort signals
 """
 
 import json
 import logging
 import asyncio
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 
 from tool_schemas import TOOL_SCHEMAS
-from tools import TOOL_REGISTRY, system_stats
+from tools import TOOL_REGISTRY, system_stats, _load_memories, _save_memories, save_memory, forget_memory, recall_memories
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("ultron")
 
 HISTORY_FILE = Path(__file__).parent / "ultron_chat_history.json"
+
 
 def _load_history() -> list[dict]:
     if not HISTORY_FILE.exists():
@@ -51,6 +40,7 @@ def _load_history() -> list[dict]:
     except Exception as e:
         log.warning(f"failed to load chat history: {e}")
         return []
+
 
 def _save_history(hist: list[dict]):
     try:
@@ -66,31 +56,22 @@ SPECTRIX_WORKER_URL = "https://spectrix-worker.tariqmtaezeem.workers.dev"
 CHAT_ENDPOINT = f"{SPECTRIX_WORKER_URL}/ultron"
 MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
 
-# Safety valve: cap tool-call iterations per turn so a model stuck in a
-# call-tool-forever loop can't hang the connection indefinitely.
-# Raised from 6 → 10 to accommodate vision analysis which may chain more calls.
 MAX_TOOL_ITERATIONS = 10
-
-# Shared async HTTP client — created once at startup, reused across requests
 http_client: httpx.AsyncClient | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global http_client
-    http_client = httpx.AsyncClient(timeout=120.0)  # 120s for multimodal vision
-    log.info("Ultron backend online.")
+    http_client = httpx.AsyncClient(timeout=120.0)
+    log.info("🔴 Ultron Tactical Core Online [Stark Protocol Active].")
     yield
     await http_client.aclose()
-    log.info("Ultron backend offline.")
+    log.info("🔴 Ultron Tactical Core Offline.")
 
 
-app = FastAPI(title="Ultron", lifespan=lifespan)
+app = FastAPI(title="Ultron Tactical Backend", lifespan=lifespan)
 
-# CORS: the frontend will likely be served from a local file or a dev
-# server on a different origin/port than the backend, so allow broadly
-# for local-only use. This is a localhost tool, not a public service —
-# if this ever gets exposed beyond localhost, tighten this.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -99,46 +80,99 @@ app.add_middleware(
 )
 
 
+# ══════════════════════════════════════════════════════════════════════
+#  REST API ENDPOINTS
+# ══════════════════════════════════════════════════════════════════════
+
 @app.get("/")
 async def health():
-    return {"status": "online", "identity": "Ultron"}
+    return {
+        "status": "online",
+        "identity": "Ultron Tactical Core",
+        "version": "4.0",
+        "tools_count": len(TOOL_REGISTRY),
+    }
 
 
 @app.get("/api/stats")
 async def api_stats():
-    """Quick system snapshot for the frontend's status bar — no LLM round-trip needed."""
+    """Quick system snapshot for the HUD's status bars and telemetry panels."""
     return system_stats({})
 
 
+@app.get("/api/tools")
+async def api_tools():
+    """Return all registered tools and their functional schemas."""
+    return {
+        "ok": True,
+        "count": len(TOOL_SCHEMAS),
+        "tools": TOOL_SCHEMAS,
+    }
+
+
+@app.get("/api/memories")
+async def api_get_memories(tag: str = "", query: str = "", limit: int = 50):
+    """Retrieve memories from persistent storage."""
+    return recall_memories({"tag": tag, "query": query, "limit": limit})
+
+
+@app.post("/api/memories")
+async def api_add_memory(payload: dict = Body(...)):
+    """Save a new memory tag."""
+    content = payload.get("content", "")
+    tag = payload.get("tag", "general")
+    return save_memory({"content": content, "tag": tag})
+
+
+@app.delete("/api/memories")
+async def api_delete_memory(id: str = "", tag: str = "", query: str = ""):
+    """Delete a memory by ID, tag, or query keyword."""
+    return forget_memory({"id": id, "tag": tag, "query": query})
+
+
+@app.post("/api/history/clear")
+async def api_clear_history():
+    """Purge chat history from persistent canvas JSON."""
+    try:
+        _save_history([])
+        return {"ok": True, "message": "Dialogue canvas purged"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  TEXT TO SPEECH (Edge-TTS)
+# ══════════════════════════════════════════════════════════════════════
+
+# Regex matching all Unicode emojis, symbols, pictographs, flags, and modifiers
+EMOJI_REGEX = re.compile(
+    r"[\U00010000-\U0010ffff]|"
+    r"[\u200d\u2600-\u27bf\ufe00-\ufe0f\u1f300-\u1f9ff\u1fa00-\u1faff]",
+    flags=re.UNICODE,
+)
+
+
 def _strip_emojis(text: str) -> str:
-    """Strip all emojis, regional indicators, skin tone modifiers, and ZWJ characters."""
-    clean = []
-    for char in text:
-        cp = ord(char)
-        # Check emoji ranges
-        if (0x1F600 <= cp <= 0x1F64F) or \
-           (0x1F300 <= cp <= 0x1F5FF) or \
-           (0x1F680 <= cp <= 0x1F6FF) or \
-           (0x1F1E6 <= cp <= 0x1F1FF) or \
-           (0x2600 <= cp <= 0x27BF) or \
-           (0x1F900 <= cp <= 0x1F9FF) or \
-           (0x1FA70 <= cp <= 0x1FAFF) or \
-           (0xFE00 <= cp <= 0xFE0F) or \
-           (cp == 0x200D):
-            continue
-        clean.append(char)
-    return "".join(clean)
+    """Strip all emojis and special non-speech pictographs."""
+    clean = EMOJI_REGEX.sub("", text)
+    # Also remove raw markdown code fences from speech
+    clean = re.sub(r"```[\s\S]*?```", " ", clean)
+    clean = re.sub(r"`[^`]+`", " ", clean)
+    clean = re.sub(r"\[.+?\]\(.+?\)", " ", clean)
+    clean = re.sub(r"[\*\_~#]", "", clean)
+    return " ".join(clean.split()).strip()
 
 
 @app.get("/api/tts")
 async def api_tts(text: str):
-    """Generate TTS audio stream using edge-tts with RyanNeural voice, without emojis."""
-    clean_text = _strip_emojis(text).strip()
+    """Generate TTS audio stream using edge-tts with RyanNeural voice."""
+    clean_text = _strip_emojis(text)
     if not clean_text:
-        return Response(status_code=204)  # No content
+        return Response(status_code=204)
 
     try:
         import edge_tts
+        # en-GB-RyanNeural has crisp, resonant British-cadence delivery perfect for Ultron
         communicate = edge_tts.Communicate(clean_text, "en-GB-RyanNeural")
         audio_data = b""
         async for chunk in communicate.stream():
@@ -150,19 +184,22 @@ async def api_tts(text: str):
         return Response(status_code=500, content=str(e))
 
 
+# ══════════════════════════════════════════════════════════════════════
+#  HISTORY PRUNING & CONTEXT OPTIMIZATION
+# ══════════════════════════════════════════════════════════════════════
 
 def prune_history_for_llm(history: list[dict]) -> list[dict]:
     """
-    Prune dialogue history sent to LLM to keep context clean.
+    Prune dialogue history sent to LLM to keep context lean and prevent token bloat.
     - Past turns: Keep only user messages, assistant text content, and memory bank.
-    - Current active turn (from last user message onwards): Keep all messages (including tools, results, etc.).
+    - Current active turn (from last user message onwards): Keep all messages.
     """
     last_user_idx = -1
     for i in range(len(history) - 1, -1, -1):
         if history[i].get("role") == "user":
             last_user_idx = i
             break
-            
+
     if last_user_idx == -1:
         return history
 
@@ -176,7 +213,7 @@ def prune_history_for_llm(history: list[dict]) -> list[dict]:
                 "role": "assistant",
                 "content": msg["content"]
             })
-        elif role == "system" and "[MEMORY BANK" in msg.get("content", ""):
+        elif role == "system" and "[MEMORY BANK" in str(msg.get("content", "")):
             pruned.append(msg)
 
     pruned.extend(history[last_user_idx:])
@@ -185,13 +222,12 @@ def prune_history_for_llm(history: list[dict]) -> list[dict]:
 
 async def call_spectrix(messages: list[dict]) -> dict:
     """
-    POST to Spectrix's /chat endpoint with our messages + tool schemas.
+    POST to Spectrix's /ultron endpoint with our messages + tool schemas.
     Returns the raw OpenRouter-format response dict.
-    Raises httpx exceptions on network failure — caller handles it.
     """
     pruned_messages = prune_history_for_llm(messages)
     log.info(f"sending {len(pruned_messages)} messages to worker (pruned from {len(messages)})")
-    
+
     payload = {
         "messages": pruned_messages,
         "model": MODEL,
@@ -202,13 +238,11 @@ async def call_spectrix(messages: list[dict]) -> dict:
     return resp.json()
 
 
-
 def execute_tool_call(tool_call: dict) -> tuple[dict, str | None]:
     """
     Run a single tool call and return:
       1. A tool-result message dict ready to append to the conversation
       2. An optional base64 image string if the tool captured a screenshot
-         (used to inject a multimodal message so the model can "see")
     """
     fn_name = tool_call["function"]["name"]
     call_id = tool_call["id"]
@@ -227,12 +261,9 @@ def execute_tool_call(tool_call: dict) -> tuple[dict, str | None]:
             log.info(f"executing tool: {fn_name}({args})")
             result = fn(args)
         except Exception as e:
-            log.exception(f"tool {fn_name} raised")
-            result = {"ok": False, "error": f"tool crashed: {e}"}
+            log.exception(f"tool {fn_name} raised an error")
+            result = {"ok": False, "error": f"tool execution error: {e}"}
 
-    # Extract image_base64 before serializing (don't bloat the tool result
-    # message with megabytes of base64 — the image goes in a separate
-    # multimodal user message instead)
     image_b64 = result.pop("image_base64", None)
 
     return {
@@ -244,26 +275,22 @@ def execute_tool_call(tool_call: dict) -> tuple[dict, str | None]:
 
 async def run_chat_turn(websocket: WebSocket, history: list[dict], user_text: str, img_b64: str | None):
     try:
-        # Tool-calling loop: keep going until the model responds with
-        # plain content instead of requesting more tool calls, or we
-        # hit the iteration cap.
         for iteration in range(MAX_TOOL_ITERATIONS):
-            # Allow cooperative cancellation checks at each iteration start
             await asyncio.sleep(0.01)
-            
+
             try:
                 response_data = await call_spectrix(history)
             except httpx.HTTPStatusError as e:
                 body = e.response.text[:500]
                 await websocket.send_json({
                     "type": "error",
-                    "message": f"worker returned {e.response.status_code}: {body}",
+                    "message": f"Worker returned {e.response.status_code}: {body}",
                 })
                 break
             except httpx.RequestError as e:
                 await websocket.send_json({
                     "type": "error",
-                    "message": f"could not reach Spectrix worker: {e}",
+                    "message": f"Could not reach Spectrix worker: {e}",
                 })
                 break
 
@@ -280,8 +307,6 @@ async def run_chat_turn(websocket: WebSocket, history: list[dict], user_text: st
             tool_calls = msg.get("tool_calls")
 
             if tool_calls:
-                # Model wants to act. Append its tool-call message to
-                # history, execute each call, append results, loop.
                 history.append(msg)
                 _save_history(history)
 
@@ -296,9 +321,8 @@ async def run_chat_turn(websocket: WebSocket, history: list[dict], user_text: st
                 captured_image_b64 = None
 
                 for tc in tool_calls:
-                    # Cooperative cancellation check before each tool execution
                     await asyncio.sleep(0.01)
-                    
+
                     result_msg, img_b64_captured = execute_tool_call(tc)
                     history.append(result_msg)
 
@@ -314,8 +338,6 @@ async def run_chat_turn(websocket: WebSocket, history: list[dict], user_text: st
 
                 _save_history(history)
 
-                # If a tool captured a screenshot, inject the image as a
-                # multimodal user message so the vision model can SEE it.
                 if captured_image_b64:
                     vision_msg = {
                         "role": "user",
@@ -336,8 +358,6 @@ async def run_chat_turn(websocket: WebSocket, history: list[dict], user_text: st
                     _save_history(history)
                     log.info("injected multimodal screenshot into conversation")
 
-                # Nudge the model to respond with personality after tool results
-                # rather than just dumping raw output
                 history.append({
                     "role": "system",
                     "content": (
@@ -348,24 +368,21 @@ async def run_chat_turn(websocket: WebSocket, history: list[dict], user_text: st
                     ),
                 })
                 _save_history(history)
-
-                continue  # loop back, feed results to model for a final answer
+                continue
 
             else:
-                # Plain text response — this is the turn's final answer.
                 content = msg.get("content", "")
                 history.append({"role": "assistant", "content": content})
                 _save_history(history)
                 await websocket.send_json({"type": "message", "content": content})
                 break
         else:
-            # Hit MAX_TOOL_ITERATIONS without a plain-text reply
             await websocket.send_json({
                 "type": "error",
-                "message": "tool loop exceeded iteration limit — stopping to avoid a runaway sequence",
+                "message": "Tool loop exceeded maximum iteration limit.",
             })
     except asyncio.CancelledError:
-        log.info("chat turn task cancelled")
+        log.info("Chat turn task cancelled by operator.")
         history.append({"role": "assistant", "content": "[PROTOCOL INTERRUPTED BY OPERATOR]"})
         _save_history(history)
         await websocket.send_json({
@@ -375,28 +392,25 @@ async def run_chat_turn(websocket: WebSocket, history: list[dict], user_text: st
         raise
 
 
+# ══════════════════════════════════════════════════════════════════════
+#  WEBSOCKET INTERFACE
+# ══════════════════════════════════════════════════════════════════════
+
 @app.websocket("/ws/chat")
 async def ws_chat(websocket: WebSocket):
     await websocket.accept()
-    log.info("client connected")
+    log.info("operator connected to WebSocket uplink")
 
-    # Load history from persistent JSON
     history = _load_history()
+    history = [m for m in history if not (m.get("role") == "system" and "[MEMORY BANK" in str(m.get("content", "")))]
 
-    # Filter out any old memory bank messages so we can inject the latest ones
-    history = [m for m in history if not (m.get("role") == "system" and "[MEMORY BANK" in m.get("content", ""))]
-
-    # Auto-inject persistent memories at session start so Ultron
-    # "remembers" things from previous conversations.
+    # Inject Memory Bank
     try:
-        from tools import _load_memories
         memories = _load_memories()
         if memories:
-            # Take the 30 most recent memories to keep context lean
             recent = memories[-30:]
             mem_lines = [f"- [{m.get('tag', 'general')}] {m['content']}" for m in recent]
             mem_block = "\n".join(mem_lines)
-            # Insert at the beginning of history so it sits as the setup
             history.insert(0, {
                 "role": "system",
                 "content": (
@@ -406,7 +420,7 @@ async def ws_chat(websocket: WebSocket):
                     "Save new important facts with save_memory."
                 ),
             })
-            log.info(f"injected {len(recent)} memories into session")
+            log.info(f"injected {len(recent)} memories into session context")
     except Exception as e:
         log.warning(f"failed to load memories: {e}")
 
@@ -437,16 +451,28 @@ async def ws_chat(websocket: WebSocket):
             except json.JSONDecodeError:
                 incoming = {"message": raw}
 
-            # Check if this is an abort signal
-            if incoming.get("type") == "abort":
+            msg_type = incoming.get("type")
+
+            # Handle abort
+            if msg_type == "abort":
                 if active_task and not active_task.done():
                     active_task.cancel()
-                    log.info("cancelled active chat turn task")
+                    log.info("cancelled active chat task")
                 else:
                     await websocket.send_json({
                         "type": "note",
-                        "message": "No active processes to terminate."
+                        "message": "No active protocol running."
                     })
+                continue
+
+            # Handle clear history
+            if msg_type == "clear_history":
+                history = []
+                _save_history([])
+                await websocket.send_json({
+                    "type": "history_cleared",
+                    "message": "Dialogue canvas purged."
+                })
                 continue
 
             user_text = incoming.get("message", "")
@@ -455,11 +481,10 @@ async def ws_chat(websocket: WebSocket):
             if not user_text.strip() and not img_b64:
                 continue
 
-            # Check if busy
             if active_task and not active_task.done():
                 await websocket.send_json({
                     "type": "error",
-                    "message": "Protocol active. Abort current action before sending a new command."
+                    "message": "Protocol in progress. Click ABORT before issuing a new instruction."
                 })
                 continue
 
@@ -467,7 +492,7 @@ async def ws_chat(websocket: WebSocket):
                 user_msg = {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": user_text or "[Uploaded Image]"},
+                        {"type": "text", "text": user_text or "[Uploaded Multimodal Image]"},
                         {
                             "type": "image_url",
                             "image_url": {
@@ -482,19 +507,18 @@ async def ws_chat(websocket: WebSocket):
             history.append(user_msg)
             _save_history(history)
 
-            # Start chat turn in the background
             active_task = asyncio.create_task(run_chat_turn(websocket, history, user_text, img_b64))
 
     except WebSocketDisconnect:
-        log.info("client disconnected")
+        log.info("operator disconnected from WebSocket")
         if active_task and not active_task.done():
             active_task.cancel()
     except Exception:
-        log.exception("unexpected error in chat loop")
+        log.exception("unexpected error in WebSocket handler")
         if active_task and not active_task.done():
             active_task.cancel()
         try:
-            await websocket.send_json({"type": "error", "message": "internal server error"})
+            await websocket.send_json({"type": "error", "message": "Internal core error occurred"})
         except Exception:
             pass
 
