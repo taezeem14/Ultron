@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ULTRON — Tactical Control Console</title>
   
-  <!-- Fast Google Fonts -->
+  <!-- Fast Google Fonts & Fallbacks -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- KaTeX CSS & JS for Mathematical Formula Rendering -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -16,8 +16,10 @@
 
   <style>
     /* ══════════════════════════════════════════════════════════════════════
-       1. ULTRA-LIGHT ZERO-GPU-OVERHEAD HUD DESIGN SYSTEM
+       1. GLOBAL FONT ENFORCEMENT & HIGH-TECH DESIGN SYSTEM
        ══════════════════════════════════════════════════════════════════════ */
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
     :root {
       --bg-void: #020204;
       --bg-deep: #050509;
@@ -38,12 +40,12 @@
       --text-dim: #71717a;
       --text-faint: #3f3f46;
       
-      --border-subtle: rgba(127, 29, 29, 0.28);
+      --border-subtle: rgba(127, 29, 29, 0.3);
       --border-bright: rgba(239, 68, 68, 0.55);
       --border-dark: #181824;
     }
 
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -51,8 +53,8 @@
       scrollbar-color: #242432 transparent;
     }
 
-    body {
-      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    html, body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
       background: var(--bg-void);
       color: var(--text-main);
       overflow: hidden;
@@ -63,16 +65,38 @@
       user-select: none;
     }
 
-    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    /* Force all form & interactive elements to use font-family */
+    button, input, textarea, select {
+      font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace, sans-serif !important;
+    }
 
-    /* Custom Webkit Scrollbars (Zero Paint Cost) */
+    .font-mono,
+    .action-chip,
+    .msg-label,
+    .card-head,
+    .stat-label-bar,
+    .metrics-grid,
+    .act-item,
+    .hud-textarea,
+    .code-box,
+    .code-content,
+    .inline-code,
+    .msg-timestamp,
+    .stat-row,
+    .event-stream-box,
+    .header-tag,
+    .hud-btn {
+      font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace !important;
+    }
+
+    /* Scrollbars */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg-deep); }
     ::-webkit-scrollbar-thumb { background: #222230; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--crimson-dim); }
 
     /* ══════════════════════════════════════════════════════════════════════
-       2. TACTICAL HUD SURFACES & BRACKETS (NO BLUR = 0MB EXTRA VRAM)
+       2. TACTICAL HUD SURFACES & BRACKETS
        ══════════════════════════════════════════════════════════════════════ */
     .hud-header {
       background: var(--bg-header);
@@ -84,18 +108,6 @@
       flex-shrink: 0;
       z-index: 30;
       position: relative;
-    }
-
-    .hud-panel {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-    }
-
-    .hud-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
     }
 
     .hud-corners { position: relative; }
@@ -147,7 +159,7 @@
       justify-content: center;
     }
     .arc-glyph {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', Consolas, monospace !important;
       font-weight: 700;
       font-size: 13px;
       color: #ff4455;
@@ -207,7 +219,6 @@
 
     .msg-label {
       font-size: 9px;
-      font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
       letter-spacing: 0.15em;
       text-transform: uppercase;
@@ -248,20 +259,17 @@
       background: #15080a;
       border: 1px solid #ef4444;
       color: #fca5a5;
-      font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
     }
 
     .bubble-note-style {
       padding: 3px 8px;
-      font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
       color: #7f1d1d;
     }
 
     .msg-timestamp {
       font-size: 8px;
-      font-family: 'JetBrains Mono', monospace;
       color: #52525b;
       margin-top: 4px;
       text-align: right;
@@ -270,9 +278,9 @@
     /* ══════════════════════════════════════════════════════════════════════
        5. MARKDOWN & CODE BLOCKS
        ══════════════════════════════════════════════════════════════════════ */
-    .md-h1 { font-size: 1.15rem; font-weight: 700; color: #fff; margin: 10px 0 6px; border-bottom: 1px solid rgba(220,38,38,0.25); padding-bottom: 3px; }
-    .md-h2 { font-size: 1.05rem; font-weight: 600; color: #fca5a5; margin: 8px 0 4px; }
-    .md-h3 { font-size: 0.95rem; font-weight: 600; color: #ef4444; margin: 6px 0 3px; text-transform: uppercase; }
+    .md-h1 { font-size: 1.15rem; font-weight: 700; color: #fff; margin: 10px 0 6px; border-bottom: 1px solid rgba(220,38,38,0.25); padding-bottom: 3px; font-family: 'Space Grotesk', sans-serif !important; }
+    .md-h2 { font-size: 1.05rem; font-weight: 600; color: #fca5a5; margin: 8px 0 4px; font-family: 'Space Grotesk', sans-serif !important; }
+    .md-h3 { font-size: 0.95rem; font-weight: 600; color: #ef4444; margin: 6px 0 3px; text-transform: uppercase; font-family: 'Space Grotesk', sans-serif !important; }
     
     .md-quote {
       border-left: 2.5px solid var(--crimson-bright);
@@ -284,7 +292,7 @@
     }
 
     .md-table-wrap { overflow-x: auto; margin: 8px 0; border: 1px solid var(--border-subtle); border-radius: 4px; }
-    .md-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .md-table { width: 100%; border-collapse: collapse; font-size: 11px; }
     .md-table th { background: #121220; color: #ef4444; font-weight: 600; text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border-subtle); }
     .md-table td { padding: 5px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #e4e4e7; }
 
@@ -294,7 +302,6 @@
       border-radius: 4px;
       margin: 8px 0;
       overflow: hidden;
-      font-family: 'JetBrains Mono', monospace;
     }
     .code-box-head {
       display: flex;
@@ -318,10 +325,10 @@
     }
     .code-copy-btn:hover { background: var(--crimson-bright); color: #fff; }
     .code-content { padding: 8px 10px; overflow-x: auto; font-size: 11.5px; line-height: 1.5; color: #fed7aa; white-space: pre; }
-    .inline-code { background: #0c0c16; border: 1px solid var(--border-subtle); color: #fbbf24; padding: 0 4px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .inline-code { background: #0c0c16; border: 1px solid var(--border-subtle); color: #fbbf24; padding: 0 4px; border-radius: 3px; font-size: 11px; }
 
     /* ══════════════════════════════════════════════════════════════════════
-       6. COMMAND DECK & ACTION CHIPS
+       6. COMMAND DECK & ACTION CHIPS (CRISP MONOSPACE)
        ══════════════════════════════════════════════════════════════════════ */
     .command-deck {
       padding: 10px 14px;
@@ -329,7 +336,7 @@
       border-top: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 7px;
       flex-shrink: 0;
     }
 
@@ -337,29 +344,33 @@
       display: flex;
       gap: 6px;
       overflow-x: auto;
-      padding-bottom: 3px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9.5px;
+      padding-bottom: 4px;
     }
     .chip-bar::-webkit-scrollbar { height: 2px; }
 
     .action-chip {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      color: #d4d4d8;
-      padding: 3px 8px;
+      background: #0d0d18;
+      border: 1px solid rgba(220, 38, 38, 0.32);
+      color: #e4e4e7;
+      padding: 4px 9px;
       border-radius: 4px;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       white-space: nowrap;
-      transition: background 0.1s, border-color 0.1s;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
     }
     .action-chip:hover {
-      background: #18090d;
+      background: #20080d;
       border-color: var(--crimson-bright);
-      color: #fff;
+      color: #ffffff;
+    }
+    .action-chip:active {
+      transform: scale(0.97);
     }
 
     .input-row {
@@ -380,15 +391,20 @@
       background: transparent;
       border: none;
       outline: none;
-      color: #fff;
-      font-family: 'JetBrains Mono', monospace;
+      color: #ffffff;
       font-size: 12.5px;
+      font-weight: 500;
       resize: none;
-      padding: 4px 6px;
+      padding: 5px 8px;
       max-height: 100px;
-      line-height: 1.4;
+      line-height: 1.45;
+      letter-spacing: 0.02em;
     }
-    .hud-textarea::placeholder { color: #7f1d1d80; }
+    .hud-textarea::placeholder {
+      color: rgba(239, 68, 68, 0.4);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
 
     .hud-btn {
       width: 32px; height: 32px;
@@ -428,7 +444,6 @@
       padding: 10px;
       gap: 10px;
       overflow-y: auto;
-      font-family: 'JetBrains Mono', monospace;
     }
 
     .telemetry-card {
@@ -518,7 +533,6 @@
       padding: 14px;
       display: flex;
       flex-direction: column;
-      font-family: 'JetBrains Mono', monospace;
     }
 
     .hidden { display: none !important; }
@@ -537,32 +551,32 @@
 
       <div>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="font-mono" style="font-weight: 700; letter-spacing: 0.2em; font-size: 14px; color: #fff;">ULTRON</span>
-          <span class="font-mono" style="font-size: 8px; padding: 1px 4px; border-radius: 2px; background: #260a0f; border: 1px solid #7f1d1d; color: #fca5a5;">v4.0 LIGHT</span>
+          <span style="font-family: 'Space Grotesk', sans-serif !important; font-weight: 700; letter-spacing: 0.2em; font-size: 14px; color: #fff;">ULTRON</span>
+          <span class="header-tag" style="font-size: 8px; padding: 1px 4px; border-radius: 2px; background: #260a0f; border: 1px solid #7f1d1d; color: #fca5a5; font-weight: 600;">v4.0 LIGHT</span>
         </div>
-        <div style="font-size: 8px; letter-spacing: 0.15em; color: #7f1d1d; text-transform: uppercase; font-family: monospace;">TACTICAL OPERATING SYSTEM</div>
+        <div style="font-size: 8px; letter-spacing: 0.15em; color: #7f1d1d; text-transform: uppercase; font-family: 'JetBrains Mono', Consolas, monospace !important;">TACTICAL OPERATING SYSTEM</div>
       </div>
     </div>
 
     <!-- Audio Visualizer (Low-GPU: Only animates during active voice) -->
     <div style="display: flex; flex-direction: column; align-items: center;" id="visualizerBox">
-      <div style="font-size: 7.5px; font-family: monospace; color: #7f1d1d; letter-spacing: 0.15em; margin-bottom: 2px;">
+      <div style="font-size: 7.5px; font-family: 'JetBrains Mono', monospace !important; color: #7f1d1d; letter-spacing: 0.15em; margin-bottom: 2px;">
         OSCILLATOR <span id="audioModeLabel" style="color: #52525b;">[STANDBY]</span>
       </div>
       <canvas id="audioCanvas" width="140" height="14" style="background: #05050a; border: 1px solid #1c1c28; border-radius: 2px;"></canvas>
     </div>
 
     <!-- Controls & Status -->
-    <div style="display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px;">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 10px;">
       
       <!-- SFX Toggle -->
       <button id="sfxToggleBtn" class="hud-btn" style="width: auto; padding: 0 7px; height: 26px; font-size: 9px;" title="Toggle Tactical SFX">
-        <span id="sfxIcon">🔊</span> <span style="margin-left: 2px;">SFX</span>
+        <span id="sfxIcon">🔊</span> <span style="margin-left: 2px; font-weight: 600;">SFX</span>
       </button>
 
       <!-- Voice Toggle -->
       <button id="voiceToggleBtn" class="hud-btn" style="width: auto; padding: 0 7px; height: 26px; font-size: 9px;" title="Toggle Voice Output">
-        <span id="voiceIcon">🗣️</span> <span style="margin-left: 2px;">VOICE</span>
+        <span id="voiceIcon">🗣️</span> <span style="margin-left: 2px; font-weight: 600;">VOICE</span>
       </button>
 
       <!-- Uptime -->
@@ -593,7 +607,7 @@
 
       <!-- Typing Indicator -->
       <div id="typingIndicator" class="hidden" style="padding: 4px 22px;">
-        <div style="display: inline-flex; align-items: center; gap: 6px; background: #0c0c16; border: 1px solid #7f1d1d; padding: 4px 10px; border-radius: 4px; font-family: monospace; font-size: 10px; color: #ef4444;">
+        <div style="display: inline-flex; align-items: center; gap: 6px; background: #0c0c16; border: 1px solid #7f1d1d; padding: 4px 10px; border-radius: 4px; font-size: 10px; color: #ef4444;">
           <span>COMPUTING RESPONSE…</span>
         </div>
       </div>
@@ -601,7 +615,7 @@
       <!-- COMMAND DECK -->
       <div class="command-deck">
         
-        <!-- Action Chips -->
+        <!-- Action Chips with Monospace Font -->
         <div class="chip-bar">
           <button id="chipScreen" class="action-chip">📸 Screen Intel</button>
           <button id="chipVitals" class="action-chip">⚡ Vitals</button>
@@ -609,11 +623,11 @@
           <button id="chipNetwork" class="action-chip">📡 Network</button>
           <button id="chipMemoryDrawer" class="action-chip">🧠 Memory Bank</button>
           <button id="chipToolsDrawer" class="action-chip">🛠️ Tools Matrix</button>
-          <button id="chipClearCanvas" class="action-chip" style="color: #f87171;">🗑️ Purge Canvas</button>
+          <button id="chipClearCanvas" class="action-chip" style="color: #f87171; border-color: rgba(239,68,68,0.4);">🗑️ Purge Canvas</button>
         </div>
 
         <!-- Attachment Chip -->
-        <div id="attachmentPreview" class="hidden" style="display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: #0e0e18; border: 1px solid #7f1d1d; border-radius: 4px; font-family: monospace; font-size: 10px;">
+        <div id="attachmentPreview" class="hidden" style="display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: #0e0e18; border: 1px solid #7f1d1d; border-radius: 4px; font-size: 10px;">
           <div id="previewThumbnail" style="width: 22px; height: 22px; background: #000; border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center;"></div>
           <span id="previewName" style="color: #fff; font-weight: 600;">file.png</span>
           <span id="previewSize" style="color: #ef4444;">0 KB</span>
@@ -647,7 +661,7 @@
             </svg>
           </button>
         </div>
-        <div id="voiceHint" style="font-size: 8px; font-family: monospace; color: #ef4444; height: 10px; text-align: center; text-transform: uppercase;"></div>
+        <div id="voiceHint" style="font-size: 8px; color: #ef4444; height: 10px; text-align: center; text-transform: uppercase;"></div>
       </div>
     </section>
 
@@ -762,7 +776,7 @@
 
   <!-- ═══════════════ CONFIRM PURGE MODAL ═══════════════ -->
   <div id="confirmModal" class="drawer-bg hidden" style="justify-content: center; align-items: center; padding: 20px;">
-    <div style="background: #0a0a14; border: 1px solid #ef4444; border-radius: 6px; padding: 16px; width: 280px; text-align: center; font-family: monospace;">
+    <div style="background: #0a0a14; border: 1px solid #ef4444; border-radius: 6px; padding: 16px; width: 280px; text-align: center;">
       <div style="color: #ef4444; font-size: 18px; margin-bottom: 4px;">⚠</div>
       <div style="font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 6px;">PURGE DIALOGUE CANVAS?</div>
       <div style="font-size: 9.5px; color: #a1a1aa; margin-bottom: 14px;">This will erase saved conversation history.</div>
@@ -966,7 +980,7 @@
               cctx.fillRect(i * 8, (14 - h) / 2, 5, h);
             }
             step += 0.4;
-          }, 60); // 16 FPS is plenty for audio bars and saves 95% CPU/GPU!
+          }, 60);
         }
       }
 
