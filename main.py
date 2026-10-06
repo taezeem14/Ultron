@@ -6,6 +6,14 @@ main.py — Ultron's Tactical Control Backend. FastAPI app exposing:
   - GET  /api/memories      list persistent memories
   - POST /api/memories      add persistent memory
   - DELETE /api/memories    delete memory by id/tag/query
+  - GET  /api/missions      list active missions and tactical goals
+  - POST /api/missions      create new mission directive
+  - PATCH /api/missions/{id} update mission status/priority
+  - DELETE /api/missions/{id} purge mission
+  - POST /api/terminal      run terminal command directly from HUD
+  - GET  /api/system/network network diagnostics
+  - GET  /api/system/apps   installed software inventory
+  - GET  /api/chat/export   export dialogue history
   - POST /api/history/clear wipe conversation canvas history
   - GET  /api/tts           Edge-TTS audio stream with RyanNeural voice
   - WS   /ws/chat           WebSocket conversation loop with tool calling and abort signals
@@ -19,11 +27,27 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response, Query, Body
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response, Query, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from tool_schemas import TOOL_SCHEMAS
-from tools import TOOL_REGISTRY, system_stats, _load_memories, _save_memories, save_memory, forget_memory, recall_memories
+from tools import (
+    TOOL_REGISTRY,
+    system_stats,
+    _load_memories,
+    _save_memories,
+    save_memory,
+    forget_memory,
+    recall_memories,
+    list_missions,
+    create_mission,
+    update_mission,
+    delete_mission,
+    execute_command,
+    get_network_info,
+    get_installed_apps,
+    notification_popup,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("ultron")
@@ -56,7 +80,7 @@ SPECTRIX_WORKER_URL = "https://spectrix-worker.tariqmtaezeem.workers.dev"
 CHAT_ENDPOINT = f"{SPECTRIX_WORKER_URL}/ultron"
 MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
 
-MAX_TOOL_ITERATIONS = 10
+MAX_TOOL_ITERATIONS = 12
 http_client: httpx.AsyncClient | None = None
 
 
@@ -64,7 +88,7 @@ http_client: httpx.AsyncClient | None = None
 async def lifespan(app: FastAPI):
     global http_client
     http_client = httpx.AsyncClient(timeout=120.0)
-    log.info("🔴 Ultron Tactical Core Online [Stark Protocol Active].")
+    log.info("🔴 Ultron Tactical Core Online [Stark Protocol Active | 40 Tools Loaded].")
     yield
     await http_client.aclose()
     log.info("🔴 Ultron Tactical Core Offline.")
@@ -89,7 +113,7 @@ async def health():
     return {
         "status": "online",
         "identity": "Ultron Tactical Core",
-        "version": "4.0",
+        "version": "4.5",
         "tools_count": len(TOOL_REGISTRY),
     }
 
@@ -130,6 +154,82 @@ async def api_delete_memory(id: str = "", tag: str = "", query: str = ""):
     return forget_memory({"id": id, "tag": tag, "query": query})
 
 
+# ── Mission Management REST APIs ──────────────────────────────────────
+@app.get("/api/missions")
+async def api_get_missions(status: str = ""):
+    """List tactical missions and goals."""
+    return list_missions({"status": status})
+
+
+@app.post("/api/missions")
+async def api_post_mission(payload: dict = Body(...)):
+    """Create a new mission."""
+    title = payload.get("title", "")
+    priority = payload.get("priority", "normal")
+    return create_mission({"title": title, "priority": priority})
+
+
+@app.patch("/api/missions/{mission_id}")
+async def api_patch_mission(mission_id: str, payload: dict = Body(...)):
+    """Update mission status ('pending', 'in_progress', 'completed')."""
+    return update_mission({
+        "id": mission_id,
+        "status": payload.get("status", ""),
+        "title": payload.get("title", ""),
+    })
+
+
+@app.delete("/api/missions/{mission_id}")
+async def api_delete_mission(mission_id: str):
+    """Purge a mission by ID."""
+    return delete_mission({"id": mission_id})
+
+
+# ── Direct Terminal Execution Endpoint ────────────────────────────────
+@app.post("/api/terminal")
+async def api_terminal_run(payload: dict = Body(...)):
+    """Execute command directly from HUD Terminal modal."""
+    cmd = payload.get("command", "").strip()
+    timeout = payload.get("timeout", 20)
+    return execute_command({"command": cmd, "timeout": timeout})
+
+
+@app.get("/api/system/network")
+async def api_system_network():
+    return get_network_info({})
+
+
+@app.get("/api/system/apps")
+async def api_system_apps(limit: int = 60):
+    return get_installed_apps({"limit": limit})
+
+
+@app.post("/api/notify")
+async def api_post_notify(payload: dict = Body(...)):
+    title = payload.get("title", "Ultron Directive")
+    msg = payload.get("message", "Task completed.")
+    return notification_popup({"title": title, "message": msg})
+
+
+@app.get("/api/chat/export")
+async def api_export_chat(format: str = "markdown"):
+    """Export conversation history as Markdown or JSON."""
+    history = _load_history()
+    if format == "json":
+        return history
+
+    lines = ["# ULTRON Tactical Dialogue Export", f"Generated: {HISTORY_FILE.stat().st_mtime if HISTORY_FILE.exists() else ''}\n"]
+    for m in history:
+        role = m.get("role", "").upper()
+        content = m.get("content", "")
+        if isinstance(content, list):
+            content = " ".join([item.get("text", "") for item in content if isinstance(item, dict) and "text" in item])
+        if content:
+            lines.append(f"### [{role}]\n{content}\n")
+
+    return Response(content="\n".join(lines), media_type="text/markdown")
+
+
 @app.post("/api/history/clear")
 async def api_clear_history():
     """Purge chat history from persistent canvas JSON."""
@@ -144,7 +244,6 @@ async def api_clear_history():
 #  TEXT TO SPEECH (Edge-TTS)
 # ══════════════════════════════════════════════════════════════════════
 
-# Regex matching all Unicode emojis, symbols, pictographs, flags, and modifiers
 EMOJI_REGEX = re.compile(
     r"[\U00010000-\U0010ffff]|"
     r"[\u200d\u2600-\u27bf\ufe00-\ufe0f\u1f300-\u1f9ff\u1fa00-\u1faff]",
@@ -155,7 +254,6 @@ EMOJI_REGEX = re.compile(
 def _strip_emojis(text: str) -> str:
     """Strip all emojis and special non-speech pictographs."""
     clean = EMOJI_REGEX.sub("", text)
-    # Also remove raw markdown code fences from speech
     clean = re.sub(r"```[\s\S]*?```", " ", clean)
     clean = re.sub(r"`[^`]+`", " ", clean)
     clean = re.sub(r"\[.+?\]\(.+?\)", " ", clean)
@@ -172,7 +270,6 @@ async def api_tts(text: str):
 
     try:
         import edge_tts
-        # en-GB-RyanNeural has crisp, resonant British-cadence delivery perfect for Ultron
         communicate = edge_tts.Communicate(clean_text, "en-GB-RyanNeural")
         audio_data = b""
         async for chunk in communicate.stream():
@@ -221,10 +318,6 @@ def prune_history_for_llm(history: list[dict]) -> list[dict]:
 
 
 async def call_spectrix(messages: list[dict]) -> dict:
-    """
-    POST to Spectrix's /ultron endpoint with our messages + tool schemas.
-    Returns the raw OpenRouter-format response dict.
-    """
     pruned_messages = prune_history_for_llm(messages)
     log.info(f"sending {len(pruned_messages)} messages to worker (pruned from {len(messages)})")
 
@@ -239,11 +332,6 @@ async def call_spectrix(messages: list[dict]) -> dict:
 
 
 def execute_tool_call(tool_call: dict) -> tuple[dict, str | None]:
-    """
-    Run a single tool call and return:
-      1. A tool-result message dict ready to append to the conversation
-      2. An optional base64 image string if the tool captured a screenshot
-    """
     fn_name = tool_call["function"]["name"]
     call_id = tool_call["id"]
 
@@ -453,7 +541,6 @@ async def ws_chat(websocket: WebSocket):
 
             msg_type = incoming.get("type")
 
-            # Handle abort
             if msg_type == "abort":
                 if active_task and not active_task.done():
                     active_task.cancel()
@@ -465,7 +552,6 @@ async def ws_chat(websocket: WebSocket):
                     })
                 continue
 
-            # Handle clear history
             if msg_type == "clear_history":
                 history = []
                 _save_history([])
