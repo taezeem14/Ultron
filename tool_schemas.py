@@ -25,6 +25,20 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "get_installed_apps",
+            "description": "List software and applications installed on the host computer.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "description": "Max applications to return (default 60)"}
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_processes",
             "description": "List currently running processes on the PC, sorted by memory usage. Optionally filter by name substring.",
             "parameters": {
@@ -62,6 +76,14 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "lock_screen",
+            "description": "Immediately lock the host machine screen for security.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "system_stats",
             "description": "Get a real-time snapshot of system vitals: CPU usage, RAM usage, storage/disk partitions, battery status, and hostname.",
             "parameters": {"type": "object", "properties": {}, "required": []},
@@ -72,6 +94,32 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "get_network_info",
             "description": "Get network interfaces, local IP address, gateway info, and internet connectivity status.",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "ping_diagnostics",
+            "description": "Test ping latency (ms) to major global DNS servers (Cloudflare, Google) and evaluate internet response time.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "targets": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of IP addresses or domains to ping"
+                    }
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_system_environment",
+            "description": "Inspect host system environment variables (username, OS version, processor architecture, temp path).",
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
     },
@@ -147,6 +195,49 @@ TOOL_SCHEMAS = [
                     "append": {"type": "boolean", "description": "If true, append instead of overwrite. Defaults to false."},
                 },
                 "required": ["path", "content"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_file_info",
+            "description": "Inspect metadata for a specific file or folder (size, timestamps, line count, permissions).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "File or folder path"}
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_file",
+            "description": "Delete a file or directory permanently. Protected system files cannot be deleted.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path to delete"}
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "move_or_rename_file",
+            "description": "Move or rename a file or directory on disk.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source": {"type": "string", "description": "Source path"},
+                    "destination": {"type": "string", "description": "Destination path"}
+                },
+                "required": ["source", "destination"],
             },
         },
     },
@@ -273,12 +364,56 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "notification_popup",
+            "description": "Trigger a native desktop notification toast banner on the user's screen.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "description": "Notification title"},
+                    "message": {"type": "string", "description": "Notification body message"}
+                },
+                "required": ["message"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "open_url",
             "description": "Open a URL in the default web browser.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "url": {"type": "string", "description": "The URL to open"}
+                },
+                "required": ["url"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Search the live web using DuckDuckGo to obtain current facts, documentation, news, or technical answers. Returns top titles, links, and snippets.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "The search query"},
+                    "limit": {"type": "integer", "description": "Max search results to return (default 5)"}
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "fetch_web_content",
+            "description": "Fetch and extract readable clean text/content from any public webpage URL.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "The webpage URL to fetch and read"}
                 },
                 "required": ["url"],
             },
@@ -332,7 +467,7 @@ TOOL_SCHEMAS = [
                 "properties": {
                     "content": {
                         "type": "string",
-                        "description": "The information to remember (e.g. 'User prefers dark mode', 'Taezeem's project is called Ultron')",
+                        "description": "The information to remember",
                     },
                     "tag": {
                         "type": "string",
@@ -376,20 +511,82 @@ TOOL_SCHEMAS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Specific memory ID to delete",
-                    },
-                    "tag": {
-                        "type": "string",
-                        "description": "Delete all memories with this tag.",
-                    },
-                    "query": {
-                        "type": "string",
-                        "description": "Delete memories containing this keyword.",
-                    },
+                    "id": {"type": "string", "description": "Specific memory ID to delete"},
+                    "tag": {"type": "string", "description": "Delete all memories with this tag."},
+                    "query": {"type": "string", "description": "Delete memories containing this keyword."},
                 },
                 "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_missions",
+            "description": "List all active tactical missions, directives, and goals from the mission deck.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": ["pending", "in_progress", "completed"],
+                        "description": "Filter by mission status (optional)"
+                    }
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_mission",
+            "description": "Create a new mission, directive, or tactical task in the mission deck.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "description": "Mission title or description"},
+                    "priority": {
+                        "type": "string",
+                        "enum": ["low", "normal", "high", "urgent"],
+                        "description": "Mission priority level"
+                    }
+                },
+                "required": ["title"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_mission",
+            "description": "Update the status of a mission (e.g. mark as 'completed' or 'in_progress').",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string", "description": "Mission ID to update"},
+                    "status": {
+                        "type": "string",
+                        "enum": ["pending", "in_progress", "completed"],
+                        "description": "New status for the mission"
+                    },
+                    "title": {"type": "string", "description": "Updated mission title (optional)"}
+                },
+                "required": ["id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_mission",
+            "description": "Purge or delete a mission from the mission deck by its ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string", "description": "Mission ID to delete"}
+                },
+                "required": ["id"],
             },
         },
     },
